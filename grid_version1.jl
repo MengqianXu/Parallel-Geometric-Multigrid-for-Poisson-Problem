@@ -62,26 +62,25 @@ function jacobi(A, b, x0)
 end
 
 #step2
-function smooth(u, f)
-    n = size(u, 1)
-    u_new = similar(u)
-    for i in 2:n-1
-        for j in 2:n-1
-            u_new[i, j] = (f[i, j] + u[i-1, j] + u[i+1, j] + u[i, j-1] + u[i, j+1]) / 4
-        end
+function smooth(A, b, x0, iterations)
+    n = length(b)
+    x = copy(x0)  
+    D = Diagonal(A)  
+    E = -LowerTriangular(A, -1)  
+    F = -UpperTriangular(A, 1)  
+    for k in 1:iterations  
+        x = (D \ ((E + F) * x + b))
     end
-    return u_new
+    return x  
 end
 
 #step3
 function restrict(u)
     n = Int(sqrt(length(u)))
-    u_coarse = similar(zeros(n÷2, n÷2))
-    for i in 1:n÷2
-        for j in 1:n÷2
-            u_coarse[i, j] = u[2i-1, 2j-1] + u[2i, 2j-1] + u[2i-1, 2j] + u[2i, 2j]
-        end
-    end
+    u_coarse = similar(zeros(n/2, n/2))
+    
+
+    
     return u_coarse
 end
 
@@ -90,7 +89,7 @@ function interpolate()
     
 end
 
-function v_cycle(n::Int, f::Vector; nu=2)
+function v_cycle(n, f; nu=2)
     if n == 2
         return direct_solve(n, f)
     else
@@ -100,7 +99,7 @@ function v_cycle(n::Int, f::Vector; nu=2)
         end
         residual = f - create_A_matrix(n) * vec(u)
         f_coarse = restrict(residual)
-        e_coarse = v_cycle(n÷2, f_coarse; nu=nu)
+        e_coarse = v_cycle(n/2, f_coarse; nu=nu)
         e_fine = interpolate(e_coarse)
         u += e_fine
         for i in 1:nu
