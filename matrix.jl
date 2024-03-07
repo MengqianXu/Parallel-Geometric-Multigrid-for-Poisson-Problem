@@ -44,9 +44,11 @@ function direct_solve(n,f_mat)
     h = 1/(n+1)
     A = create_A_matrix(n)
     L = cholesky(A)#A=L×L^T
-    y = L \ (f_mat * h^2)
-    U = L' \ y
+    #y = L \ (f_mat * h^2)
+    #U = L' \ y
     #LL^T⋅U=h^2⋅f, Ly=h^2⋅f,L^T⋅U=y
+    println("the sizeof f_mat",size(f_mat))
+    U = L\(f_mat*h^2)
     return U
 end
 
