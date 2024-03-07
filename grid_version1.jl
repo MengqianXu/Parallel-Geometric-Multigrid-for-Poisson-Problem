@@ -75,19 +75,14 @@ end
 
 #step3
 function restrict(u)
-    n = Int(sqrt(length(u)))
-    u_coarse = similar(zeros(n÷2, n÷2))
-    for i in 1:n÷2
-        for j in 1:n÷2
-            u_coarse[i, j] = u[2i-1, 2j-1] + u[2i, 2j-1] + u[2i-1, 2j] + u[2i, 2j]
-        end
-    end
+    
     return u_coarse
 end
 
 # step 4
-function interpolate()
-    
+function interpolate(e_coarse)
+
+    return e_fine
 end
 
 function v_cycle(n::Int, f::Vector; nu=2)
