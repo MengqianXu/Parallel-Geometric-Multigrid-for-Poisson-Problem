@@ -76,17 +76,21 @@ end
 
 #step3
 function restrict(u)
+<<<<<<< HEAD
     n = Int(sqrt(length(u)))
     u_coarse = similar(zeros(n/2, n/2))
     
 
+=======
+>>>>>>> 188184ca00567846095952982739129b315d0193
     
     return u_coarse
 end
 
 # step 4
-function interpolate()
-    
+function interpolate(e_coarse)
+
+    return e_fine
 end
 
 function v_cycle(n, f; nu=2)
