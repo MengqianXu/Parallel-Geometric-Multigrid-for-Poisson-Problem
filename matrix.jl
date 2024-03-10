@@ -111,6 +111,6 @@ end
 
 # Calculate errors for each value of n
 errors = [get_error(val, p, q) for val in values]
-plot(n_values, errors, xlabel="n", ylabel="Error", title="Erreur entre Cholesky et Iterative Solver", legend=false, marker=:circle)
+plot(values, errors, xlabel="n", ylabel="Error", title="Erreur entre Cholesky et Iterative Solver", legend=false, marker=:circle)
 
 
