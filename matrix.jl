@@ -42,6 +42,21 @@ function calculate_f(x, y, u)
     return f
 end
 
+function calculate_f(x, y, u)
+    n = length(x)
+    h = x[2] - x[1]
+    f = zeros(n^2)
+    idx = 1
+    for j in 1:n
+        for i in 1:n
+            f[idx] = -(u[i+1, j] - 2u[i, j] + u[i-1, j]) / h^2 - (u[i, j+1] - 2u[i, j] + u[i, j-1]) / h^2
+            idx += 1
+        end 
+    end
+    return f
+end
+
+
 
 #AU=h^2f
 function direct_solve(n,f_mat)
@@ -70,7 +85,7 @@ function iterative_solver_CG(n, f_mat)
 end
 
 function calculate_error(U_direct,U_iterative)
-    error = error = norm(U_direct - U_iterative)
+    error =  norm(U_direct - U_iterative)
     return error
 end
 
@@ -84,17 +99,16 @@ q = 3
 x = range(0, stop=1, length=n)
 y = range(0, stop=1, length=n)
 u = calculate_u.(x', y, p, q)
-f = calculate_f(x, y, u)
-f_mat = reshape(f, n^2)
+f_mat = calculate_f(x, y, u)
 #println(f_mat)
 A = create_A_matrix(n)
 #println(A)
 U_direct = direct_solve(n,f_mat)
-#println("Solution(directe) U pour n = $n:\n", U_direct)
+println("Solution(directe) U pour n = $n:\n", U_direct)
 U_iterative = iterative_solver_CG(n,f_mat)
-#println("Solution(iterative) U pour n = $n:\n", U_iterative)
+println("Solution(iterative) U pour n = $n:\n", U_iterative)
 error=calculate_error(U_direct,U_iterative)
-#println("Erreur entre Cholesky et Iterative Solver: ", error)
+println("Erreur entre Cholesky et Iterative Solver: ", error)
 
 #plot
 values = 2:10
@@ -102,8 +116,7 @@ function get_error(n, p, q)
     x = range(0, stop=1, length=n)
     y = range(0, stop=1, length=n)
     u = calculate_u.(x', y, p, q)
-    f = calculate_f(x, y, u)
-    f_mat = reshape(f, n^2)
+    f_mat = calculate_f(x, y, u)
     U_direct = direct_solve(n, f_mat)
     U_iterative = iterative_solver_CG(n, f_mat)
     error = norm(U_direct - U_iterative)
@@ -113,6 +126,6 @@ end
 
 # Calculate errors for each value of n
 errors = [get_error(val, p, q) for val in values]
-plot(n_values, errors, xlabel="n", ylabel="Error", title="Erreur entre Cholesky et Iterative Solver", legend=false, marker=:circle)
+plot(values, errors, xlabel="n", ylabel="Error", title="Erreur entre Cholesky et Iterative Solver", legend=false, marker=:circle)
 
 
