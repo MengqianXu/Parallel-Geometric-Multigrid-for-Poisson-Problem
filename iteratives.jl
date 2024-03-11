@@ -1,7 +1,7 @@
 using LinearAlgebra
 using Random
 
-function Jacobi(A, b, x0)
+function Jacobi1(A, b, x0)
 	D = Diagonal(A)
 	E = -(LowerTriangular(A) - D)
 	F = -(UpperTriangular(A) - D)
@@ -22,7 +22,7 @@ function Jacobi(A, b, x0)
 	return res
 end
 
-function GaussSeidel(A, b, x0)
+function GaussSeidel1(A, b, x0)
 	D = Diagonal(A)
 	E = -(LowerTriangular(A) - D)
 	F = -(UpperTriangular(A) - D)
@@ -64,14 +64,78 @@ function SOR(A, b, w, x0)
 	return res
 end
 
-A = kron(4I(3), Tridiagonal(-ones((3, 3))) + 5I) + kron(Tridiagonal(-ones((3, 3))) + I, I(3))
-b = ones((9, 1))
-x0 = rand(1:9, 9)
-resJ = Jacobi(A, b, x0)
-resGS = GaussSeidel(A, b, x0)
-w = 0.5
-resS = SOR(A, b, w, x0)
+function Jacobi2(A, b, x0, tol = 10^(-15))
+	ancien = copy(x0)
+	nouveau = copy(b)
+	n = length(b)
+	
+	for i = 1:n
+		for j = 1:n
+			if j != i 
+				nouveau[i] -= A[i, j]*ancien[j]
+			end
+		end
+		nouveau[i] /= A[i, i]
+	end
+	
+	norme = norm(nouveau - ancien)
+	while norme >= tol
+		ancien = copy(nouveau)
+		nouveau = copy(b)
+		
+		for i = 1:n
+			for j = 1:n
+				if j != i 
+					nouveau[i] -= A[i, j]*ancien[j]
+				end
+			end
+			nouveau[i] /= A[i, i]
+		end
+		
+		norme = norm(nouveau - ancien)
+	end
 
-abs(norm(A\b - resJ))
-abs(norm(A\b - resGS))
-abs(norm(A\b - resS))
+	return nouveau
+end
+
+function GaussSeidel2(A, b, x0, tol = 10^(-15))
+	ancien = copy(x0)
+	nouveau = copy(b)
+	n = length(b)
+	
+	for i = 1:n
+		for j = 1:n
+			if j != i
+				if j < i 
+					nouveau[i] -= A[i, j]*nouveau[j]
+				else
+					nouveau[i] -= A[i, j]*ancien[j]
+				end
+			end
+		end
+		nouveau[i] /= A[i, i]
+	end
+	
+	norme = norm(nouveau - ancien)
+	while norme >= 10^(-15)
+		ancien = copy(nouveau)
+		nouveau = copy(b)
+		
+		for i = 1:n
+			for j = 1:n
+				if j != i
+					if j < i 
+						nouveau[i] -= A[i, j]*nouveau[j]
+					else
+						nouveau[i] -= A[i, j]*ancien[j]
+					end
+				end
+			end
+			nouveau[i] /= A[i, i]
+		end
+		
+		norme = norm(nouveau - ancien)
+	end
+
+	return nouveau
+end
