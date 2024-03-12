@@ -6,8 +6,8 @@ function Convergence(A, F, N, p, q, w = 0.5)
 	x0 = rand(1:9, (N*N, 1))
 	sol = A\F 
 	
-	resJ = Jacobi2(A, F, x0)
-	resGS = GaussSeidel2(A, F, x0)
+	resJ = Jacobi(A, F, x0)
+	resGS = GaussSeidel(A, F, x0)
 	resS = SOR(A, F, w, x0)
 	
 	normeJ = norm(sol - resJ)
