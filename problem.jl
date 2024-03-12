@@ -20,27 +20,27 @@ function Creer_A(N)
 end
 
 function Creer_F(p, q, N)
-	F = zeros(N, N)
+	F = zeros(N*N)
 	for i = 1:N
 		x = i/(N + 1)
 		for j = 1:N
 			y = j/(N + 1)
-			F[i, j] = u(p, q, x, y)
+			F[N*(i - 1) + j] = u(p, q, x, y)
 		end
 	end
-	return ((1/(N + 1))^2)F[:]
+	return ((1/(N + 1))^2)F
 end
 
 function Creer_F(α, β, γ, δ, N)
-	F = zeros(N, N)
+	F = zeros(N*N)
 	for i = 1:N
 		x = i/(N + 1)
 		for j = 1:N
 			y = j/(N + 1)
-			F[i, j] = u(α, β, γ, δ, x, y)
+			F[N*(i - 1) + j] = u(α, β, γ, δ, x, y)
 		end
 	end
-	return (1/(N + 1))F[:]
+	return ((1/(N + 1))^2)F
 end
 
 N = 3

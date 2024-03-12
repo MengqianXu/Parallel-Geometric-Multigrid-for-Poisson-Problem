@@ -14,10 +14,6 @@ function Convergence(A, F, N, p, q, w = 0.5)
 	normeGS = norm(sol - resGS)
 	normeS = norm(sol - resS)
 
-	resJ = reshape(resJ, (N, N))
-	resGS = reshape(resGS, (N, N))
-	resS = reshape(resS, (N, N))
-	
 	eJ = 0
 	eGS = 0
 	eS = 0
@@ -26,9 +22,12 @@ function Convergence(A, F, N, p, q, w = 0.5)
 		x = i/(N + 1)
 		for j = 1:N
 			y = j/(N + 1)
-			eJ += abs(u(p, q, x, y) - resJ[i, j])^2
-			eGS += abs(u(p, q, x, y) - resGS[i, j])^2
-			eS += abs(u(p, q, x, y) - resS[i, j])^2
+			eJ += abs(u(p, q, x, y) - resJ[(i - 1)*N + j])^2
+			println(eJ)
+			eGS += abs(u(p, q, x, y) - resGS[(i - 1)*N + j])^2
+			println(eGS)
+			eS += abs(u(p, q, x, y) - resS[(i - 1)*N + j])^2
+			println(eS)
 		end
 	end
 
@@ -78,3 +77,10 @@ end
 
 plot(tabN, [tabJ1, tabGS1, tabS1], label = ["Jacobi" "Gauss-Seidel" "SOR"])
 plot(tabN, [tabNJ1, tabNGS1, tabNS1], label = ["Jacobi" "Gauss-Seidel" "SOR"])
+
+i = 10
+A = Creer_A(i)
+F1 = Creer_F(p, q, i)
+F2 = Creer_F(α, β, γ, δ, i) 
+eJ1, eGS1, eS1, normeJ1, normeGS1, normeS1 = Convergence(A, F1, i, p, q)
+eJ2, eGS2, eS2, normeJ2, normeGS2, normeS2 = Convergence(A, F2, i, p, q)

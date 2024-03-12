@@ -142,7 +142,7 @@ end
 
 function Multigrid(A, F, N::Int64, x0, pre, post)
 	if N == 1
-		return 4*((1/(N + 1))^2)*F
+		return (1/4)*F
 	else
 		U = copy(x0)
 
@@ -150,31 +150,25 @@ function Multigrid(A, F, N::Int64, x0, pre, post)
 			U = Jacobi(A, F, U)
 		end
 
-		U = reshape(U, (N, N))
-		tempF = reshape(F, (N, N))
 		newN = floor(Int64, N/2)
 		newA = Creer_A(newN)
-		newF = zeros(newN, newN)
-		newU = zeros(newN, newN)
+		newF = zeros(newN*newN)
+		newU = zeros(newN*newN)
 
 		for i = 1:newN
 			for j = 1:newN
-				newF[i, j] = tempF[2i, 2j]
-				newU[i, j] = U[2i, 2j]
+				newF[j + N*(i - 1)] = F[2j + N*(2i - 1)]
+				newU[j + N*(i - 1)] = U[2j + N*(2i - 1)]
 			end
 		end
-		newF = newF[:]
-		newU = newU[:]
-
+		
 		newU = Multigrid(newA, newF, newN, newU, pre, post)
 
 		for i = 1:newN
 			for j = 1:newN
-				U[2i, 2j] = newU[i, j]
+				U[2j + N*(2i - 1)] = newU[j + N*(i - 1)]
 			end
 		end
-
-		U = U[:]
 
 		for i = 1:pre
 			U = Jacobi(A, F, U)
