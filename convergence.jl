@@ -2,85 +2,114 @@ using LinearAlgebra
 using Random
 using Plots
 
-function Convergence(A, F, N, p, q, w = 0.5)
+function Erreur(A, F, N, p, q, w = 0.5)
 	x0 = rand(1:9, (N*N, 1))
-	sol = A\F 
+	sol_direct = A\F
+	vrai_sol = [u(p, q, i/(N + 1), j /(N + 1)) for j = 1:N, i = 1:N][:]
 	
 	resJ = Jacobi(A, F, x0)
 	resGS = GaussSeidel(A, F, x0)
 	resS = SOR(A, F, w, x0)
 	
-	normeJ = norm(sol - resJ)
-	normeGS = norm(sol - resGS)
-	normeS = norm(sol - resS)
+	relativeJ = norm(sol_direct - resJ)
+	relativeGS = norm(sol_direct - resGS)
+	relativeS = norm(sol_direct - resS)
 
-	eJ = 0
-	eGS = 0
-	eS = 0
+	absolueJ = norm(vrai_sol - resJ)
+	absolueGS = norm(vrai_sol - resGS)
+	absolueS = norm(vrai_sol - resS)
 
-	for i = 1:N
-		x = i/(N + 1)
-		for j = 1:N
-			y = j/(N + 1)
-			eJ += abs(u(p, q, x, y) - resJ[(i - 1)*N + j])^2
-			println(eJ)
-			eGS += abs(u(p, q, x, y) - resGS[(i - 1)*N + j])^2
-			println(eGS)
-			eS += abs(u(p, q, x, y) - resS[(i - 1)*N + j])^2
-			println(eS)
-		end
-	end
-
-	return eJ, eGS, eS, normeJ, normeGS, normeS
+	return absolueJ, absolueGS, absolueS, relativeJ, relativeGS, relativeS
 end
 
-tabJ1 = zeros(9)
-tabGS1 = zeros(9)
-tabS1 = zeros(9)
+function Erreur(A, F, N, α, β, γ, δ, w = 0.5)
+	x0 = rand(1:9, (N*N, 1))
+	sol_direct = A\F
+	vrai_sol = [u(α, β, γ, δ, i/(N + 1), j /(N + 1)) for j = 1:N, i = 1:N][:]
+	
+	resJ = Jacobi(A, F, x0)
+	resGS = GaussSeidel(A, F, x0)
+	resS = SOR(A, F, w, x0)
+	
+	relativeJ = norm(sol_direct - resJ)
+	relativeGS = norm(sol_direct - resGS)
+	relativeS = norm(sol_direct - resS)
 
-tabNJ1 = zeros(9)
-tabNGS1 = zeros(9)
-tabNS1 = zeros(9)
+	absolueJ = norm(vrai_sol - resJ)
+	absolueGS = norm(vrai_sol - resGS)
+	absolueS = norm(vrai_sol - resS)
 
-tabJ2 = zeros(9)
-tabGS2 = zeros(9)
-tabS2 = zeros(9)
+	return absolueJ, absolueGS, absolueS, relativeJ, relativeGS, relativeS
+end
 
-tabNJ2 = zeros(9)
-tabNGS2 = zeros(9)
-tabNS2 = zeros(9)
+taille = 6
+tabEAJ1 = zeros(taille)
+tabEAGS1 = zeros(taille)
+tabEAS1 = zeros(taille)
+tabERJ1 = zeros(taille)
+tabERGS1 = zeros(taille)
+tabERS1 = zeros(taille)
+tabEAJ2 = zeros(taille)
+tabEAGS2 = zeros(taille)
+tabEAS2 = zeros(taille)
+tabERJ2 = zeros(taille)
+tabERGS2 = zeros(taille)
+tabERS2 = zeros(taille)
+tabN = zeros(taille)
 
-tabN = zeros(9)
-for i in 2:10
-	tabN[i - 1] = i
-    A = Creer_A(i)
-    F1 = Creer_F(p, q, i)
-    F2 = Creer_F(α, β, γ, δ, i) 
-    eJ1, eGS1, eS1, normeJ1, normeGS1, normeS1 = Convergence(A, F1, i, p, q)
-    eJ2, eGS2, eS2, normeJ2, normeGS2, normeS2 = Convergence(A, F2, i, p, q)
+for i in 0:5
+	@show i
+	# index = Int64(i/10)
+	index = i + 1
+	N = 2^i
+	tabN[index] = N
     
-	tabJ1[i - 1] = eJ1
-    tabJ2[i - 1] = eJ2
-    tabGS1[i - 1] = eGS1
-    tabGS2[i - 1] = eGS2
-    tabS1[i - 1] = eS1
-    tabS2[i - 1] = eS2
-
-	tabNJ1[i - 1] = normeJ1
-	tabNJ2[i - 1] = normeJ2
-	tabNGS1[i - 1] = normeGS1
-	tabNGS2[i - 1] = normeGS2
-	tabNS1[i - 1] = normeS1
-	tabNS2[i - 1] = normeS2
+	A = Creer_A(N)
+    F1 = Creer_F(p, q, N)
+    F2 = Creer_F(α, β, γ, δ, N) 
+    
+	absolueJ1, absolueGS1, absolueS1, relativeJ1, relativeGS1, relativeS1 = Erreur(A, F1, N, p, q)
+    absolueJ2, absolueGS2, absolueS2, relativeJ2, relativeGS2, relativeS2 = Erreur(A, F2, N, α, β, γ, δ)
+    
+	tabEAJ1[index] = absolueJ1
+	tabEAGS1[index] = absolueGS1
+	tabEAS1[index] = absolueS1
+	
+	tabERJ1[index] = relativeJ1
+	tabERGS1[index] = relativeGS1
+	tabERS1[index] = relativeS1
+	
+	tabEAJ2[index] = absolueJ2
+	tabEAGS2[index] = absolueGS2
+	tabEAS2[index] = absolueS2
+	
+	tabERJ2[index] = relativeJ2
+	tabERGS2[index] = relativeGS2
+	tabERS2[index] = relativeS2
 	
 end
 
-plot(tabN, [tabJ1, tabGS1, tabS1], label = ["Jacobi" "Gauss-Seidel" "SOR"])
-plot(tabN, [tabNJ1, tabNGS1, tabNS1], label = ["Jacobi" "Gauss-Seidel" "SOR"])
+p1 = plot(tabN, [tabEAJ1, tabEAGS1, tabEAS1], label = ["Jacobi" "Gauss-Seidel" "SOR"])
+p2 = plot(tabN, [tabERJ1, tabERGS1, tabERS1], label = ["Jacobi" "Gauss-Seidel" "SOR"])
+p3 = plot(tabN, [tabEAJ2, tabEAGS2, tabEAS2], label = ["Jacobi" "Gauss-Seidel" "SOR"])
+p4 = plot(tabN, [tabERJ2, tabERGS2, tabERS2], label = ["Jacobi" "Gauss-Seidel" "SOR"])
+
+savefig(p1, "Erreur absolue F1.png")
+savefig(p2, "Erreur relative F1.png")
+savefig(p3, "Erreur absolue F2.png")
+savefig(p4, "Erreur relative F2.png")
+
+
+i = 3
+A = Creer_A(i)
+F1 = Creer_F(p, q, i)
+F2 = Creer_F(α, β, γ, δ, i) 
+absolueJ1, absolueGS1, absolueS1, relativeJ1, relativeGS1, relativeS1 = Erreur(A, F1, i, p, q)
+absolueJ2, absolueGS2, absolueS2, relativeJ2, relativeGS2, relativeS2 = Erreur(A, F2, i, α, β, γ, δ)
 
 i = 10
 A = Creer_A(i)
 F1 = Creer_F(p, q, i)
 F2 = Creer_F(α, β, γ, δ, i) 
-eJ1, eGS1, eS1, normeJ1, normeGS1, normeS1 = Convergence(A, F1, i, p, q)
-eJ2, eGS2, eS2, normeJ2, normeGS2, normeS2 = Convergence(A, F2, i, p, q)
+absolueJ1, absolueGS1, absolueS1, relativeJ1, relativeGS1, relativeS1 = Erreur(A, F1, i, p, q)
+absolueJ2, absolueGS2, absolueS2, relativeJ2, relativeGS2, relativeS2 = Erreur(A, F2, i, α, β, γ, δ)
