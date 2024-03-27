@@ -70,8 +70,8 @@ function parallel_jacobi(A, b, x0, tol = 1e-15, max_iters = 1000)
             nouveau[i] = (b[i] - sum) / A[i, i]
         end
         
-        temp = zeros(length(ancien))
-        MPI.Allreduce(nouveau, temp, MPI.SUM, comm)
+        
+        temp = MPI.Allreduce(nouveau,  MPI.SUM, comm)
         copy!(ancien, temp)
         
         if norm(nouveau - ancien) < tol
