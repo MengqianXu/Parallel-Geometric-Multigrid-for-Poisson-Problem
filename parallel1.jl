@@ -1,5 +1,12 @@
 using Distributed
+using MPI
 using LinearAlgebra
+
+
+
+comm = MPI.COMM_WORLD
+rank = MPI.Comm_rank(comm)
+size = MPI.Comm_size(comm)
 
 function Multigrid(A, F, N::Int64, x0, pre, post)
     if N == 1
@@ -9,7 +16,7 @@ function Multigrid(A, F, N::Int64, x0, pre, post)
 
         @sync begin
             @distributed for i = 1:pre
-                U = Jacobi(A, F, U)
+                U = parallel_jacobi(A, F, U)
             end
         end
 
@@ -35,7 +42,7 @@ function Multigrid(A, F, N::Int64, x0, pre, post)
 
         @sync begin
             @distributed for i = 1:pre
-                U = Jacobi(A, F, U)
+                U = parallel_jacobi(A, F, U)
             end
         end
 
@@ -44,36 +51,30 @@ function Multigrid(A, F, N::Int64, x0, pre, post)
 end
 
 
-%Allocate each Jacobi iteration task to multiple processors for parallel execution
-function Jacobi(A, b, x0, tol = 10^(-15))
+
+function parallel_jacobi(A, b, x0, tol = 1e-15, max_iters = 1000)
     ancien = copy(x0)
     nouveau = copy(b)
     n = length(b)
-    
-    for i = 1:n
-        for j = 1:n
-            if j != i 
-                nouveau[i] -= A[i, j]*ancien[j]
-            end
-        end
-        nouveau[i] /= A[i, i]
-    end
-    
-    norme = norm(nouveau - ancien)
-    while norme >= tol
-        ancien = copy(nouveau)
-        nouveau = copy(b)
+    iter = 0
+    while iter < max_iters
+        iter += 1
         for i = 1:n
+            sum = 0.0
             for j = 1:n
-                if j != i 
-                    nouveau[i] -= A[i, j]*ancien[j]
+                if j != i
+                    sum += A[i, j] * ancien[j]
                 end
             end
-            nouveau[i] /= A[i, i]
+            nouveau[i] = (b[i] - sum) / A[i, i]
         end
         
-        norme = norm(nouveau - ancien)
+        MPI.Allreduce(nouveau, ancien, MPI.SUM, comm)
+        
+        if norm(nouveau - ancien) < tol
+            break
+        end
     end
-
+    
     return nouveau
 end
