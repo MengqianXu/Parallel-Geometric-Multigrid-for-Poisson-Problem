@@ -42,19 +42,7 @@ function calculate_f(x, y, u)
     return f
 end
 
-function calculate_f(x, y, u)
-    n = length(x)
-    h = x[2] - x[1]
-    f = zeros(n^2)
-    idx = 1
-    for j in 1:n
-        for i in 1:n
-            f[idx] = -(u[i+1, j] - 2u[i, j] + u[i-1, j]) / h^2 - (u[i, j+1] - 2u[i, j] + u[i, j-1]) / h^2
-            idx += 1
-        end 
-    end
-    return f
-end
+
 
 
 
