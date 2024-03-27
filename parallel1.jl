@@ -1,9 +1,10 @@
 using Distributed
 using MPI
 using LinearAlgebra
+using SparseArrays
+using Random
 
-
-
+MPI.Init()
 comm = MPI.COMM_WORLD
 rank = MPI.Comm_rank(comm)
 size = MPI.Comm_size(comm)
@@ -69,7 +70,9 @@ function parallel_jacobi(A, b, x0, tol = 1e-15, max_iters = 1000)
             nouveau[i] = (b[i] - sum) / A[i, i]
         end
         
-        MPI.Allreduce(nouveau, ancien, MPI.SUM, comm)
+        temp = zeros(length(ancien))
+        MPI.Allreduce(nouveau, temp, MPI.SUM, comm)
+        copy!(ancien, temp)
         
         if norm(nouveau - ancien) < tol
             break
@@ -78,3 +81,25 @@ function parallel_jacobi(A, b, x0, tol = 1e-15, max_iters = 1000)
     
     return nouveau
 end
+
+N = 3
+A = Creer_A(N)
+F1 = Creer_F(p, q, N)
+F2 = Creer_F(α, β, γ, δ, N)
+U1 = [u(p, q, i/(N + 1), j /(N + 1)) for j = 1:N, i = 1:N][:]
+U2 = [u(α, β, γ, δ, i/(N + 1), j /(N + 1)) for j = 1:N, i = 1:N][:]
+x0 = rand(1:9, (N*N, 1))
+
+tabY = [i/(N + 1) for i = 1:N, j = 1:N][:]
+tabX = [j/(N + 1) for i = 1:N, j = 1:N][:]
+
+sol1 = A\F1
+
+resM1 = Multigrid(A, F1, N, x0, 1, 1)
+p1 = plot(tabX, tabY, [U1, sol1,  resM1], label = ["Solution exacte" "Directe" "Multigrid"])
+
+sol2 = A\F2
+resM2 = Multigrid(A, F2, N, x0, 1, 1)
+p2 = plot(tabX, tabY, [U2, sol2,resM2], label = ["Solution exacte" "Directe" "Multigrid"])
+
+MPI.Finalize()
