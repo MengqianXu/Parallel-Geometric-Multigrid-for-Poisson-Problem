@@ -127,7 +127,6 @@ end
 
 
 time1 = @elapsed begin
-    # Code block to measure execution time
     N = 3
     A = Creer_A(N)
     F1 = Creer_F(p, q, N)
@@ -136,12 +135,10 @@ time1 = @elapsed begin
     res_origine = Multigrid(A, F1, N, x0, 1, 1)
     #println(res_origine)
 end
-
 println("Elapsed time(origine): ", time1, " seconds")
 
 
-time1 = @elapsed begin
-    # Code block to measure execution time
+time2 = @elapsed begin
     N = 3
     A = Creer_A(N)
     F1 = Creer_F(p, q, N)
@@ -150,11 +147,10 @@ time1 = @elapsed begin
     res = Multigrid_distributed(A, F1, N, x0, 1, 1)
     #println(res)
 end
-println("Elapsed time(distributed): ", time1, " seconds")
+println("Elapsed time(distributed): ", time2, " seconds")
 
 
 time_threads = @elapsed begin
-    # Code block to measure execution time
     N = 3
     A = Creer_A(N)
     F1 = Creer_F(p, q, N)
