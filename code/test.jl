@@ -12,7 +12,7 @@ using Plots
 p = 2
 q = 2
 
-for n = 2:7
+for n = 2:2
 	@show n
 	N = 2^n - 1
 	A = Creer_A(N)
@@ -33,19 +33,19 @@ for n = 2:7
 	resMJ1 = MultigridJ(A, F1, N, x0, 1, 1)
 	resMGS1 = MultigridGS(A, F1, N, x0, 1, 1)
 
-	sol2 = A\F2
-	resJ2 = Jacobi(A, F2, x0)
-	resGS2 = GaussSeidel(A, F2, x0)
-	resS2 = SOR(A, F2, w, x0)
-	resMJ2 = MultigridJ(A, F2, N, x0, 1, 1)
-	resMGS2 = MultigridGS(A, F2, N, x0, 1, 1)
+	# sol2 = A\F2
+	# resJ2 = Jacobi(A, F2, x0)
+	# resGS2 = GaussSeidel(A, F2, x0)
+	# resS2 = SOR(A, F2, w, x0)
+	# resMJ2 = MultigridJ(A, F2, N, x0, 1, 1)
+	# resMGS2 = MultigridGS(A, F2, N, x0, 1, 1)
 	
-	nom_fichier = string("data/Version3/Resultats/Resultats_avec_N_=_", string(N), ".txt")
-	open(nom_fichier, "w") do file
-		for i = 1:(N*N)
-			println(file, tabX[i], "\t", tabY[i], "\t", U1[i], "\t", sol1[i], "\t", resJ1[i], "\t", resGS1[i], "\t", resS1[i], "\t", resMJ1[i], "\t", resMGS1[i], "\t", U2[i], "\t", sol2[i], "\t", resJ2[i], "\t", resGS2[i], "\t", resS2[i], "\t", resMJ2[i], "\t", resMGS2[i])
-		end
-	end
+	# nom_fichier = string("data/Version3/Resultats/Resultats_avec_N_=_", string(N), ".txt")
+	# open(nom_fichier, "w") do file
+	# 	for i = 1:(N*N)
+	# 		println(file, tabX[i], "\t", tabY[i], "\t", U1[i], "\t", sol1[i], "\t", resJ1[i], "\t", resGS1[i], "\t", resS1[i], "\t", resMJ1[i], "\t", resMGS1[i], "\t", U2[i], "\t", sol2[i], "\t", resJ2[i], "\t", resGS2[i], "\t", resS2[i], "\t", resMJ2[i], "\t", resMGS2[i])
+	# 	end
+	# end
 end
 
 

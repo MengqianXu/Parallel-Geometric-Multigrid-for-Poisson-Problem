@@ -233,6 +233,10 @@ function Jacobi(A, b, x0, tol = 10^(-15), MaxIter = 10000)
 			i = L[k]
 			j = C[k]
 			v = V[k]
+			@show i 
+			@show j 
+			@show v 
+			println("")
 			if i != prec
 				nouveau[prec] /= A[prec, prec]
 				prec = i
