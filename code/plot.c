@@ -5,25 +5,40 @@
 #include <sys/time.h>
 
 int main(int argc, char **argv){
-	char fichier[1000000] = "../data/Version3/", commande[1000000];
+	char fichier[1000000] = "../data/Version3/Comparaisons/", commande[1000000];
 	DIR* dossier = opendir(fichier);
 	if (dossier){
+		// struct dirent* dir;
+		// while((dir = readdir(dossier))){
+		// 	char* nom = dir->d_name;
+		// 	if((strcmp(".", nom)) && (strcmp("..", nom)) && (strcmp("Conclusions.txt", nom))){
+		// 		printf("%s\n", nom);
+		// 		// strcpy(fichier, "../data/Version3/Comparaisons/");
+		// 		// strcpy(commande, "python3 plot.py ");
+		// 		// strcat(fichier, nom);
+		// 		// strcat(commande, fichier);
+		// 		// system(commande);
+		// 	}
+		// }
+		closedir(dossier);
+	}
+	strcpy(fichier, "../data/Version3/Resultats/");
+	strcpy(commande, "python3 plot2.py ");
+	dossier = opendir(fichier);
+	if (dossier){
 		struct dirent* dir;
-		// printf("Les fichiers presents sont : \n");
 		while((dir = readdir(dossier))){
 			char* nom = dir->d_name;
 			if((strcmp(".", nom)) && (strcmp("..", nom))){
-				strcpy(fichier, "../data/Version3/");
-				strcpy(commande, "python3 plot.py ");
 				// printf("%s\n", nom);
+				strcpy(fichier, "../data/Version3/Resultats/");
 				strcat(fichier, nom);
+				strcat(fichier, " ");
 				strcat(commande, fichier);
-				// strcat(commande, "'");
-				// printf("%s\n", commande);
-				system(commande);
 			}
 		}
 		closedir(dossier);
+		system(commande);
 	}
 	else{
 		printf("Il y a un probleme quelque part !\n");

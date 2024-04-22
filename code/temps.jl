@@ -10,7 +10,7 @@ p = 2
 q = 2
 
 # # Temps de résolution des méthodes itératives
-# taille = 6
+# taille = 7
 # N = 3
 # A = Creer_A(N)
 # F1 = Creer_F(p, q, N)
@@ -84,7 +84,7 @@ open(nom_fichier, "w") do file
 	println(file, "\t- Pour F2 : α = ", α, ", β = ", β, ", γ = ", γ, ", δ = ", δ, "\n")
 end
 
-for m = 2:6
+for m = 2:7
 	@show m
 	N = 2^m - 1
 	A = Creer_A(N)
