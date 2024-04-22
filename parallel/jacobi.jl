@@ -40,14 +40,13 @@ function parallel_jacobi(A, b, N, npx, npy, tol=1e-15, max_iter=10000)
     while norm_diff > tol && iteration < max_iter
        
         new_local_u .= local_u
-        
         for i = 2:nlx-1
             for j = 2:nly-1
                 sum = local_A[i, j-1] * local_u[i, j-1] +
                       local_A[i, j+1] * local_u[i, j+1] +
                       local_A[i-1, j] * local_u[i-1, j] +
                       local_A[i+1, j] * local_u[i+1, j]
-                new_local_u[i, j] = (local_b[i] - sum) / local_A[i, j]
+                new_local_u[i, j] = (local_b[i] - sum) / local_A[i, i]
             end
         end
         
