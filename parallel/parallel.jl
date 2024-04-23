@@ -52,13 +52,6 @@ function parallel_jacobi(A, b, x0, tol=1e-15, max_iter=10000)
         norm_diff = norm(new_local_x - local_x)
         local_x .= new_local_x
         
-        # 全局归约以计算所有进程的差值范数
-        global_norm_diff = MPI.Allreduce(norm_diff, MPI.SUM, comm)
-        
-        if rank == 0
-            println("Iteration: $iteration, Norm difference: $global_norm_diff")
-        end
-        
         iteration += 1
     end
     
