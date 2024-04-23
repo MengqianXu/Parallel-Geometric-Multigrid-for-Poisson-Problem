@@ -5,25 +5,50 @@ using Plots
 
 
 # [(i/(N + 1), j /(N + 1)) for j = 1:N, i = 1:N][:]
+α = 6
+β = 1
+γ = 5
+δ = 10
+p = 2
+q = 2
 
-N = 15
-A = Creer_A(N)
-F1 = Creer_F(p, q, N)
-F2 = Creer_F(α, β, γ, δ, N)
-U1 = [u(p, q, i/(N + 1), j /(N + 1)) for j = 1:N, i = 1:N][:]
-U2 = [u(α, β, γ, δ, i/(N + 1), j /(N + 1)) for j = 1:N, i = 1:N][:]
-x0 = ones(N*N, 1)
-w = 0.5
+for n = 2:2
+	@show n
+	N = 2^n - 1
+	A = Creer_A(N)
+	F1 = Creer_F(p, q, N)
+	F2 = Creer_F(α, β, γ, δ, N)
+	U1 = [u(p, q, i/(N + 1), j /(N + 1)) for j = 1:N, i = 1:N][:]
+	U2 = [u(α, β, γ, δ, i/(N + 1), j /(N + 1)) for j = 1:N, i = 1:N][:]
+	x0 = ones(N*N, 1)
+	w = 0.5
 
-# tabY = [i/(N + 1) for i = 1:N, j = 1:N][:]
-# tabX = [j/(N + 1) for i = 1:N, j = 1:N][:]
+	tabY = [i/(N + 1) for i = 1:N, j = 1:N][:]
+	tabX = [j/(N + 1) for i = 1:N, j = 1:N][:]
 
-# sol1 = A\F1
-# resJ1 = Jacobi(A, F1, x0)
-# resGS1 = GaussSeidel(A, F1, x0)
-# resS1 = SOR(A, F1, w, x0)
-resMJ1 = MultigridJ(A, F1, N, x0, 1, 1)
-resMGS1 = MultigridGS(A, F1, N, x0, 1, 1)
+	sol1 = A\F1
+	resJ1 = Jacobi(A, F1, x0)
+	resGS1 = GaussSeidel(A, F1, x0)
+	resS1 = SOR(A, F1, w, x0)
+	resMJ1 = MultigridJ(A, F1, N, x0, 1, 1)
+	resMGS1 = MultigridGS(A, F1, N, x0, 1, 1)
+
+	# sol2 = A\F2
+	# resJ2 = Jacobi(A, F2, x0)
+	# resGS2 = GaussSeidel(A, F2, x0)
+	# resS2 = SOR(A, F2, w, x0)
+	# resMJ2 = MultigridJ(A, F2, N, x0, 1, 1)
+	# resMGS2 = MultigridGS(A, F2, N, x0, 1, 1)
+	
+	# nom_fichier = string("data/Version3/Resultats/Resultats_avec_N_=_", string(N), ".txt")
+	# open(nom_fichier, "w") do file
+	# 	for i = 1:(N*N)
+	# 		println(file, tabX[i], "\t", tabY[i], "\t", U1[i], "\t", sol1[i], "\t", resJ1[i], "\t", resGS1[i], "\t", resS1[i], "\t", resMJ1[i], "\t", resMGS1[i], "\t", U2[i], "\t", sol2[i], "\t", resJ2[i], "\t", resGS2[i], "\t", resS2[i], "\t", resMJ2[i], "\t", resMGS2[i])
+	# 	end
+	# end
+end
+
+
 
 # p11 = surface(tabX, tabY, U1, title = "Solution exacte")
 # p12 = surface(tabX, tabY, sol1, title = "Directe")
@@ -32,13 +57,6 @@ resMGS1 = MultigridGS(A, F1, N, x0, 1, 1)
 # p15 = surface(tabX, tabY, resS1, title = "SOR")
 # p16 = surface(tabX, tabY, resMJ1, title = "Multigrid avec Jacobi")
 # p17 = surface(tabX, tabY, resMGS1, title = "Multigrid avec Gauss-Seidel")
-
-# sol2 = A\F2
-# resJ2 = Jacobi(A, F2, x0)
-# resGS2 = GaussSeidel(A, F2, x0)
-# resS2 = SOR(A, F2, w, x0)
-resMJ2 = MultigridJ(A, F2, N, x0, 1, 1)
-resMGS2 = MultigridGS(A, F2, N, x0, 1, 1)
 
 # p2 = surface(tabX, tabY, U2, title = "Solution exacte")
 # p2 = surface(tabX, tabY, sol2, title = "Directe")

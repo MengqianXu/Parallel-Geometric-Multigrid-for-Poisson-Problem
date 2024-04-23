@@ -233,6 +233,10 @@ function Jacobi(A, b, x0, tol = 10^(-15), MaxIter = 10000)
 			i = L[k]
 			j = C[k]
 			v = V[k]
+			@show i 
+			@show j 
+			@show v 
+			println("")
 			if i != prec
 				nouveau[prec] /= A[prec, prec]
 				prec = i
@@ -374,15 +378,15 @@ function SOR(A, b, w, x0, tol = 10^(-15), MaxIter = 10000)
 end
 
 function MultigridJ(A, F, N::Int64, x0, pre, post)
-	println("début multigrid, N = ", N)
+	# println("début multigrid, N = ", N)
 	if N == 1
 		return (1/4)*F
 	else
 		U = copy(x0)
 
-		println("Pre smoothing")
+		# println("Pre smoothing")
 		for i = 1:pre
-			@show i
+			# @show i
 			U = Jacobi(A, F, U)
 		end
 
@@ -391,11 +395,11 @@ function MultigridJ(A, F, N::Int64, x0, pre, post)
 		newF = zeros(newN*newN)
 		newU = zeros(newN*newN)
 
-		println("Fine to coarse")
+		# println("Fine to coarse")
 		for i = 1:newN
-			@show i
+			# @show i
 			for j = 1:newN
-				@show j
+				# @show j
 				newF[j + newN*(i - 1)] = F[2j + N*(2i - 1)]
 				newU[j + newN*(i - 1)] = U[2j + N*(2i - 1)]
 			end
@@ -403,36 +407,36 @@ function MultigridJ(A, F, N::Int64, x0, pre, post)
 		
 		newU = MultigridJ(newA, newF, newN, newU, pre, post)
 
-		println("Coarse to fine")
+		# println("Coarse to fine")
 		for i = 1:newN
-			@show i
+			# @show i
 			for j = 1:newN
-				@show j
+				# @show j
 				U[2j + N*(2i - 1)] = newU[j + newN*(i - 1)]
 			end
 		end
 
-		println("Post smoothing")
+		# println("Post smoothing")
 		for i = 1:post
-			@show i
+			# @show i
 			U = Jacobi(A, F, U)
 		end
 
-		println("fin multigrid, N = ", N, "\n")
+		# println("fin multigrid, N = ", N, "\n")
 		return U
 	end
 end
 
 function MultigridGS(A, F, N::Int64, x0, pre, post)
-	println("début multigrid, N = ", N)
+	# println("début multigrid, N = ", N)
 	if N == 1
 		return (1/4)*F
 	else
 		U = copy(x0)
 
-		println("Pre smoothing")
+		# println("Pre smoothing")
 		for i = 1:pre
-			@show i
+			# @show i
 			U = GaussSeidel(A, F, U)
 		end
 
@@ -441,11 +445,11 @@ function MultigridGS(A, F, N::Int64, x0, pre, post)
 		newF = zeros(newN*newN)
 		newU = zeros(newN*newN)
 
-		println("Fine to coarse")
+		# println("Fine to coarse")
 		for i = 1:newN
-			@show i
+			# @show i
 			for j = 1:newN
-				@show j
+				# @show j
 				newF[j + newN*(i - 1)] = F[2j + N*(2i - 1)]
 				newU[j + newN*(i - 1)] = U[2j + N*(2i - 1)]
 			end
@@ -453,22 +457,22 @@ function MultigridGS(A, F, N::Int64, x0, pre, post)
 		
 		newU = MultigridGS(newA, newF, newN, newU, pre, post)
 
-		println("Coarse to fine")
+		# println("Coarse to fine")
 		for i = 1:newN
-			@show i
+			# @show i
 			for j = 1:newN
-				@show j
+				# @show j
 				U[2j + N*(2i - 1)] = newU[j + newN*(i - 1)]
 			end
 		end
 
-		println("Post smoothing")
+		# println("Post smoothing")
 		for i = 1:post
-			@show i
+			# @show i
 			U = GaussSeidel(A, F, U)
 		end
 
-		println("fin multigrid, N = ", N, "\n")
+		# println("fin multigrid, N = ", N, "\n")
 		return U
 	end
 end

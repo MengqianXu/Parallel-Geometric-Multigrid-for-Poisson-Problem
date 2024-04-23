@@ -55,7 +55,7 @@ function Erreur(A, F, N, α, β, γ, δ, w = 0.5)
 end
 
 # # Convergence des méthodes itératives
-# taille = 6
+# taille = 7
 α = 6
 β = 1
 γ = 5
@@ -126,7 +126,7 @@ tabPost = [post for post = 1:10, pre = 1:10][:]
 taille = length(tabPre)
 nom_fichier = "data/Version3/Conclusions.txt"
 
-for m = 2:6
+for m = 2:7
 	@show m
 	N = 2^m - 1
 	A = Creer_A(N)

@@ -1,0 +1,356 @@
+Les paramètres sont : 
+	- Pour F1 : p = 2, q = 2
+	- Pour F2 : α = 6, β = 1, γ = 5, δ = 10
+
+Pour le temps : 
+	Pour N = 3 : 
+		Pour F1 : 
+			Avec Jacobi : 
+			- pre = 3
+			- post = 1
+			- temps = 0.0016079
+
+			Avec Gauss-Seidel : 
+			- pre = 2
+			- post = 2
+			- temps = 0.0015107
+
+		Pour F2 : 
+			Avec Jacobi : 
+			- pre = 1
+			- post = 2
+			- temps = 0.0014059
+
+			Avec Gauss-Seidel : 
+			- pre = 1
+			- post = 2
+			- temps = 0.001464
+
+	Pour N = 7 : 
+		Pour F1 : 
+			Avec Jacobi : 
+			- pre = 2
+			- post = 1
+			- temps = 0.0053279
+
+			Avec Gauss-Seidel : 
+			- pre = 1
+			- post = 2
+			- temps = 0.0051493
+
+		Pour F2 : 
+			Avec Jacobi : 
+			- pre = 1
+			- post = 4
+			- temps = 0.0056231
+
+			Avec Gauss-Seidel : 
+			- pre = 1
+			- post = 2
+			- temps = 0.0052012
+
+	Pour N = 15 : 
+		Pour F1 : 
+			Avec Jacobi : 
+			- pre = 3
+			- post = 1
+			- temps = 0.0576755
+
+			Avec Gauss-Seidel : 
+			- pre = 2
+			- post = 1
+			- temps = 0.0306074
+
+		Pour F2 : 
+			Avec Jacobi : 
+			- pre = 1
+			- post = 1
+			- temps = 0.0274939
+
+			Avec Gauss-Seidel : 
+			- pre = 1
+			- post = 1
+			- temps = 0.0269174
+
+	Pour N = 31 : 
+		Pour F1 : 
+			Avec Jacobi : 
+			- pre = 2
+			- post = 1
+			- temps = 0.3926068
+
+			Avec Gauss-Seidel : 
+			- pre = 4
+			- post = 3
+			- temps = 0.2589449
+
+		Pour F2 : 
+			Avec Jacobi : 
+			- pre = 4
+			- post = 8
+			- temps = 0.2598105
+
+			Avec Gauss-Seidel : 
+			- pre = 5
+			- post = 2
+			- temps = 0.2339495
+
+	Pour N = 63 : 
+		Pour F1 : 
+			Avec Jacobi : 
+			- pre = 1
+			- post = 1
+			- temps = 2.7929311
+
+			Avec Gauss-Seidel : 
+			- pre = 1
+			- post = 2
+			- temps = 3.0445104
+
+		Pour F2 : 
+			Avec Jacobi : 
+			- pre = 1
+			- post = 1
+			- temps = 2.2222014
+
+			Avec Gauss-Seidel : 
+			- pre = 1
+			- post = 2
+			- temps = 2.6644426
+
+Pour les erreurs : 
+	Pour N = 3 : 
+		Pour F1 : 
+			Avec Jacobi : 
+				Erreur absolue : 
+					- pre = 1
+					- post = 1
+					- erreur = 0.4674011002723395
+
+				Erreur relative : 
+					- pre = 4
+					- post = 6
+					- erreur = 1.223493953182565e-16
+
+			Avec Gauss-Seidel : 
+				Erreur absolue : 
+					- pre = 1
+					- post = 2
+					- erreur = 0.4674011002723395
+
+				Erreur relative : 
+					- pre = 2
+					- post = 2
+					- erreur = 1.227315189520799e-16
+
+		Pour F2 : 
+			Avec Jacobi : 
+				Erreur absolue : 
+					- pre = 1
+					- post = 1
+					- erreur = 1.745235555039721e-6
+
+				Erreur relative : 
+					- pre = 1
+					- post = 10
+					- erreur = 8.99513311169348e-17
+
+			Avec Gauss-Seidel : 
+				Erreur absolue : 
+					- pre = 1
+					- post = 1
+					- erreur = 1.7452355548145038e-6
+
+				Erreur relative : 
+					- pre = 1
+					- post = 10
+					- erreur = 2.582129649021553e-18
+
+	Pour N = 7 : 
+		Pour F1 : 
+			Avec Jacobi : 
+				Erreur absolue : 
+					- pre = 1
+					- post = 2
+					- erreur = 0.21211715018205923
+
+				Erreur relative : 
+					- pre = 1
+					- post = 3
+					- erreur = 3.4608441271281875e-15
+
+			Avec Gauss-Seidel : 
+				Erreur absolue : 
+					- pre = 1
+					- post = 3
+					- erreur = 0.2121171501820592
+
+				Erreur relative : 
+					- pre = 1
+					- post = 2
+					- erreur = 1.5440215170284057e-15
+
+		Pour F2 : 
+			Avec Jacobi : 
+				Erreur absolue : 
+					- pre = 1
+					- post = 10
+					- erreur = 1.0892700368140372e-6
+
+				Erreur relative : 
+					- pre = 1
+					- post = 10
+					- erreur = 1.794226478076448e-15
+
+			Avec Gauss-Seidel : 
+				Erreur absolue : 
+					- pre = 1
+					- post = 10
+					- erreur = 1.0892700374284764e-6
+
+				Erreur relative : 
+					- pre = 1
+					- post = 10
+					- erreur = 3.959916512444248e-16
+
+	Pour N = 15 : 
+		Pour F1 : 
+			Avec Jacobi : 
+				Erreur absolue : 
+					- pre = 9
+					- post = 1
+					- erreur = 0.10360597377503242
+
+				Erreur relative : 
+					- pre = 1
+					- post = 1
+					- erreur = 4.7163293018159513e-14
+
+			Avec Gauss-Seidel : 
+				Erreur absolue : 
+					- pre = 1
+					- post = 4
+					- erreur = 0.10360597377503314
+
+				Erreur relative : 
+					- pre = 1
+					- post = 8
+					- erreur = 2.5652180711545988e-15
+
+		Pour F2 : 
+			Avec Jacobi : 
+				Erreur absolue : 
+					- pre = 1
+					- post = 10
+					- erreur = 4.64841736952922e-7
+
+				Erreur relative : 
+					- pre = 1
+					- post = 10
+					- erreur = 3.2387430695547985e-15
+
+			Avec Gauss-Seidel : 
+				Erreur absolue : 
+					- pre = 1
+					- post = 10
+					- erreur = 4.6484174884810864e-7
+
+				Erreur relative : 
+					- pre = 3
+					- post = 10
+					- erreur = 1.3783144218766578e-15
+
+	Pour N = 31 : 
+		Pour F1 : 
+			Avec Jacobi : 
+				Erreur absolue : 
+					- pre = 1
+					- post = 1
+					- erreur = 0.05150343104126029
+
+				Erreur relative : 
+					- pre = 1
+					- post = 1
+					- erreur = 3.586947115894399e-13
+
+			Avec Gauss-Seidel : 
+				Erreur absolue : 
+					- pre = 1
+					- post = 8
+					- erreur = 0.05150343104127275
+
+				Erreur relative : 
+					- pre = 1
+					- post = 5
+					- erreur = 5.15216977637518e-15
+
+		Pour F2 : 
+			Avec Jacobi : 
+				Erreur absolue : 
+					- pre = 1
+					- post = 10
+					- erreur = 2.293867033949607e-7
+
+				Erreur relative : 
+					- pre = 1
+					- post = 10
+					- erreur = 3.803191066653684e-15
+
+			Avec Gauss-Seidel : 
+				Erreur absolue : 
+					- pre = 1
+					- post = 10
+					- erreur = 2.2938676975262715e-7
+
+				Erreur relative : 
+					- pre = 1
+					- post = 10
+					- erreur = 1.8246268501965234e-15
+
+	Pour N = 63 : 
+		Pour F1 : 
+			Avec Jacobi : 
+				Erreur absolue : 
+					- pre = 3
+					- post = 1
+					- erreur = 0.025714485739802197
+
+				Erreur relative : 
+					- pre = 1
+					- post = 10
+					- erreur = 9.688548074958375e-15
+
+			Avec Gauss-Seidel : 
+				Erreur absolue : 
+					- pre = 1
+					- post = 9
+					- erreur = 0.025714485739907526
+
+				Erreur relative : 
+					- pre = 1
+					- post = 2
+					- erreur = 9.76250123425814e-15
+
+		Pour F2 : 
+			Avec Jacobi : 
+				Erreur absolue : 
+					- pre = 1
+					- post = 1
+					- erreur = 1.1361030434758495e-7
+
+				Erreur relative : 
+					- pre = 2
+					- post = 10
+					- erreur = 3.9548565882576425e-15
+
+			Avec Gauss-Seidel : 
+				Erreur absolue : 
+					- pre = 1
+					- post = 10
+					- erreur = 1.1453631567368788e-7
+
+				Erreur relative : 
+					- pre = 1
+					- post = 10
+					- erreur = 1.9529064390956734e-15
+
