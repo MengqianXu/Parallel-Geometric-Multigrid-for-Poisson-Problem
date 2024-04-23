@@ -86,7 +86,7 @@ function parallel_jacobi(A, b, N, npx, npy, tol=1e-15, max_iter=10000)
     
     if rank == 0
         # The main process splices all local solution vectors to obtain the final result vector
-        result = vcat(gathered_local_u...)
+        result = hcat(gathered_local_u...)
         return result
     else
         return nothing
@@ -120,6 +120,6 @@ function benchmark_jacobi_methods(N)
 end
 
 
-N = 10
+N = 7
 benchmark_jacobi_methods(N)
 
