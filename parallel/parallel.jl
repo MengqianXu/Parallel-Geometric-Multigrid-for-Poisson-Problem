@@ -67,7 +67,7 @@ x0 = zeros(N * N)
 result = parallel_jacobi(A, F, x0)
 println("Parallel Jacobi result:")
 println(result)
-
+MPI.Finalize()
 
 
 
