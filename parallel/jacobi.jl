@@ -1,6 +1,8 @@
+using Pkg
+Pkg.add("MPI")
 using MPI
 
-
+MPI.Init()
 function calculate_subdomain(rank, npx, npy, N)
     myidx = rank % npx
     myidy = div(rank, npx)
@@ -22,8 +24,6 @@ function parallel_jacobi(A, b, N, npx, npy, tol=1e-15, max_iter=10000)
     comm = MPI.COMM_WORLD
     rank = MPI.Comm_rank(comm)
     size = MPI.Comm_size(comm)
-    
- 
     x0, y0, nlx, nly = calculate_subdomain(rank, npx, npy, N)
     @assert 1 <= x0 <= N && 1 <= y0 <= N && (x0 + nlx - 1) <= N && (y0 + nly - 1) <= N
     
@@ -54,27 +54,28 @@ function parallel_jacobi(A, b, N, npx, npy, tol=1e-15, max_iter=10000)
         local_u .= new_local_u
         
         # Send and receive boundary data, blocking communication
+        # 交换边界数据
         if x0 > 1
-            MPI.Sendrecv(local_u[2, :], rank-1, 0,
-                         local_u[1, :], rank-1, 0, comm)
+            dest_rank = rank - 1
+            MPI.send(local_u[2, :], dest_rank, 0, comm)
+            MPI.recv!(local_u[1, :], dest_rank, 0, comm)
         end
         if x0 + nlx - 1 < N
-            MPI.Sendrecv(local_u[nlx-1, :], rank+1, 0,
-                         local_u[nlx, :], rank+1, 0, comm)
+            dest_rank = rank + 1
+            MPI.send(local_u[nlx-1, :], dest_rank, 0, comm)
+            MPI.recv!(local_u[nlx, :], dest_rank, 0, comm)
         end
         if y0 > 1
+            dest_rank = rank - npx
             left_boundary = local_u[:, 2]
-            right_boundary = similar(left_boundary)
-            MPI.Sendrecv(left_boundary, rank-npx, 0,
-                         right_boundary, rank-npx, 0, comm)
-            local_u[:, 1] .= right_boundary
+            MPI.send(left_boundary, dest_rank, 0, comm)
+            MPI.recv!(local_u[:, 1], dest_rank, 0, comm)
         end
         if y0 + nly - 1 < N
+            dest_rank = rank + npx
             right_boundary = local_u[:, nly-1]
-            left_boundary = similar(right_boundary)
-            MPI.Sendrecv(right_boundary, rank+npx, 0,
-                         left_boundary, rank+npx, 0, comm)
-            local_u[:, nly] .= left_boundary
+            MPI.send(right_boundary, dest_rank, 0, comm)
+            MPI.recv!(local_u[:, nly], dest_rank, 0, comm)
         end
         
         
@@ -107,12 +108,12 @@ function benchmark_jacobi_methods(N)
     #println("non-parallel Jacobi",x_jacobi)
     
     # Solve with parallel Jacobi method
-    npx = 4  # Number of processes in x-direction
-    npy = 2  # Number of processes in y-direction
-  
+    # npx =  Number of processes in x-direction
+    # npy =  Number of processes in y-direction
+    npx,npy = calculate_optimal_process(N)
     
     println("Solving with parallel Jacobi...")
-    @time x_parallel_jacobi = parallel_jacobi(A, b, N, npx, npy)
+    @time x_parallel_jacobi = parallel_jacobi(A, F, N, npx, npy)
     println("Final result vector size: $(length(x_parallel_jacobi))")
     println("parallel Jacobi",x_parallel_jacobi)
     # Compare solutions
@@ -122,4 +123,6 @@ end
 
 N = 7
 benchmark_jacobi_methods(N)
+MPI.Finalize()
+
 
