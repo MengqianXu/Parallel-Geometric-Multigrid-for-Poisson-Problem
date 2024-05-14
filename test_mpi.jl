@@ -13,6 +13,8 @@ rank = MPI.Comm_rank(comm)
 size = MPI.Comm_size(comm)
 # @benchmark begin
 test()
+test1 = 1
+MPI.Allreduce(test1, +, comm)
 # end
 
-MPI.Finalize()
+# MPI.Finalize()

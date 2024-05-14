@@ -1,0 +1,172 @@
+Les paramètres sont : 
+	- Pour F1 : p = 2, q = 2
+	- Pour F2 : α = 6, β = 1, γ = 5, δ = 10
+
+Pour N = 1 : 
+	Pour F1 : 
+		Avec Jacobi : 
+		- pre = 8
+		- post = 5
+		- temps = 2.7e-6
+
+		Avec Gauss-Seidel : 
+		- pre = 10
+		- post = 6
+		- temps = 1.7e-6
+
+	Pour F2 : 
+		Avec Jacobi : 
+		- pre = 1
+		- post = 7
+		- temps = 1.5e-6
+
+		Avec Gauss-Seidel : 
+		- pre = 2
+		- post = 10
+		- temps = 1.5e-6
+
+
+Pour N = 3 : 
+	Pour F1 : 
+		Avec Jacobi : 
+		- pre = 5
+		- post = 2
+		- temps = 1.56e-5
+
+		Avec Gauss-Seidel : 
+		- pre = 3
+		- post = 1
+		- temps = 1.44e-5
+
+	Pour F2 : 
+		Avec Jacobi : 
+		- pre = 3
+		- post = 3
+		- temps = 1.17e-5
+
+		Avec Gauss-Seidel : 
+		- pre = 1
+		- post = 1
+		- temps = 1.4e-5
+
+
+Pour N = 7 : 
+	Pour F1 : 
+		Avec Jacobi : 
+		- pre = 2
+		- post = 3
+		- temps = 7.74e-5
+
+		Avec Gauss-Seidel : 
+		- pre = 10
+		- post = 1
+		- temps = 0.0001149
+
+	Pour F2 : 
+		Avec Jacobi : 
+		- pre = 1
+		- post = 1
+		- temps = 8.14e-5
+
+		Avec Gauss-Seidel : 
+		- pre = 1
+		- post = 4
+		- temps = 6.96e-5
+
+
+Pour N = 15 : 
+	Pour F1 : 
+		Avec Jacobi : 
+		- pre = 9
+		- post = 1
+		- temps = 0.0003467
+
+		Avec Gauss-Seidel : 
+		- pre = 4
+		- post = 2
+		- temps = 0.0002933
+
+	Pour F2 : 
+		Avec Jacobi : 
+		- pre = 3
+		- post = 2
+		- temps = 0.0002521
+
+		Avec Gauss-Seidel : 
+		- pre = 3
+		- post = 3
+		- temps = 0.0003161
+
+
+Pour N = 31 : 
+	Pour F1 : 
+		Avec Jacobi : 
+		- pre = 2
+		- post = 1
+		- temps = 0.0047959
+
+		Avec Gauss-Seidel : 
+		- pre = 2
+		- post = 1
+		- temps = 0.0047586
+
+	Pour F2 : 
+		Avec Jacobi : 
+		- pre = 2
+		- post = 4
+		- temps = 0.0045549
+
+		Avec Gauss-Seidel : 
+		- pre = 2
+		- post = 2
+		- temps = 0.0045651
+
+
+Pour N = 63 : 
+	Pour F1 : 
+		Avec Jacobi : 
+		- pre = 6
+		- post = 1
+		- temps = 0.088947
+
+		Avec Gauss-Seidel : 
+		- pre = 4
+		- post = 7
+		- temps = 0.099153
+
+	Pour F2 : 
+		Avec Jacobi : 
+		- pre = 5
+		- post = 1
+		- temps = 0.07448
+
+		Avec Gauss-Seidel : 
+		- pre = 7
+		- post = 9
+		- temps = 0.0804705
+
+
+Pour N = 127 : 
+	Pour F1 : 
+		Avec Jacobi : 
+		- pre = 7
+		- post = 10
+		- temps = 1.749955
+
+		Avec Gauss-Seidel : 
+		- pre = 1
+		- post = 4
+		- temps = 1.685602
+
+	Pour F2 : 
+		Avec Jacobi : 
+		- pre = 1
+		- post = 3
+		- temps = 1.7673125
+
+		Avec Gauss-Seidel : 
+		- pre = 1
+		- post = 2
+		- temps = 1.7222512
+
+

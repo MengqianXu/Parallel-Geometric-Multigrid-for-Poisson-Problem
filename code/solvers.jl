@@ -2,6 +2,8 @@ using LinearAlgebra
 using Random
 using SparseArrays
 
+include("problem.jl")
+
 # function Jacobi(A, b, x0, tol = 10^(-15), MaxIter = 10000)
 # 	D = Diagonal(A)
 # 	E = -(LowerTriangular(A) - D)
@@ -199,7 +201,7 @@ using SparseArrays
 # 	return nouveau
 # end
 
-function Jacobi(A, b, x0, tol = 10^(-15), MaxIter = 10000)
+function Jacobi(A, b, x0, MaxIter = 10000, tol = 10^(-15))
 	ancien = copy(x0)
 	nouveau = copy(b)
 	C, L, V = findnz(A)
@@ -233,10 +235,10 @@ function Jacobi(A, b, x0, tol = 10^(-15), MaxIter = 10000)
 			i = L[k]
 			j = C[k]
 			v = V[k]
-			@show i 
-			@show j 
-			@show v 
-			println("")
+			# @show i 
+			# @show j 
+			# @show v 
+			# println("")
 			if i != prec
 				nouveau[prec] /= A[prec, prec]
 				prec = i
@@ -254,7 +256,7 @@ function Jacobi(A, b, x0, tol = 10^(-15), MaxIter = 10000)
 	return nouveau
 end
 
-function GaussSeidel(A, b, x0, tol = 10^(-15), MaxIter = 10000)
+function GaussSeidel(A, b, x0, MaxIter = 10000, tol = 10^(-15))
 	ancien = copy(x0)
 	nouveau = copy(b)
 	C, L, V = findnz(A)
@@ -313,7 +315,7 @@ function GaussSeidel(A, b, x0, tol = 10^(-15), MaxIter = 10000)
 	return nouveau
 end
 
-function SOR(A, b, w, x0, tol = 10^(-15), MaxIter = 10000)
+function SOR(A, b, w, x0, MaxIter = 10000, tol = 10^(-15))
 	ancien = x0
 	nouveau = w*b
 	C, L, V = findnz(A)
@@ -377,102 +379,134 @@ function SOR(A, b, w, x0, tol = 10^(-15), MaxIter = 10000)
 	return nouveau
 end
 
-function MultigridJ(A, F, N::Int64, x0, pre, post)
-	# println("début multigrid, N = ", N)
-	if N == 1
-		return (1/4)*F
-	else
-		U = copy(x0)
-
-		# println("Pre smoothing")
-		for i = 1:pre
-			# @show i
-			U = Jacobi(A, F, U)
+function Prolongation(U, N)
+	newN = 2N + 1
+	temp = reshape(U, (N, N))
+	res = zeros(newN, newN)
+	for i = 1:N
+		for j = 1:N
+			res[2i, 2j] += temp[i, j]
+			res[2i - 1, 2j - 1] += temp[i, j]/4
+			res[2i - 1, 2j + 1] += temp[i, j]/4
+			res[2i + 1, 2j - 1] += temp[i, j]/4
+			res[2i + 1, 2j + 1] += temp[i, j]/4
+			res[2i, 2j - 1] += temp[i, j]/2
+			res[2i, 2j + 1] += temp[i, j]/2
+			res[2i - 1, 2j] += temp[i, j]/2
+			res[2i + 1, 2j] += temp[i, j]/2
 		end
-
-		newN = floor(Int64, N/2)
-		newA = Creer_A(newN)
-		newF = zeros(newN*newN)
-		newU = zeros(newN*newN)
-
-		# println("Fine to coarse")
-		for i = 1:newN
-			# @show i
-			for j = 1:newN
-				# @show j
-				newF[j + newN*(i - 1)] = F[2j + N*(2i - 1)]
-				newU[j + newN*(i - 1)] = U[2j + N*(2i - 1)]
-			end
-		end
-		
-		newU = MultigridJ(newA, newF, newN, newU, pre, post)
-
-		# println("Coarse to fine")
-		for i = 1:newN
-			# @show i
-			for j = 1:newN
-				# @show j
-				U[2j + N*(2i - 1)] = newU[j + newN*(i - 1)]
-			end
-		end
-
-		# println("Post smoothing")
-		for i = 1:post
-			# @show i
-			U = Jacobi(A, F, U)
-		end
-
-		# println("fin multigrid, N = ", N, "\n")
-		return U
 	end
+	return res[:], newN
 end
 
-function MultigridGS(A, F, N::Int64, x0, pre, post)
-	# println("début multigrid, N = ", N)
-	if N == 1
-		return (1/4)*F
-	else
-		U = copy(x0)
-
-		# println("Pre smoothing")
-		for i = 1:pre
-			# @show i
-			U = GaussSeidel(A, F, U)
+function Restriction(U, N)
+	newN = floor(Int64, N/2)
+	temp = reshape(U, (N, N))
+	res = zeros(newN, newN)
+	for i = 1:newN
+		for j = 1:newN
+			res[i, j] += temp[2i, 2j]/4
+			res[i, j] += temp[2i, 2j - 1]/8
+			res[i, j] += temp[2i, 2j + 1]/8
+			res[i, j] += temp[2i - 1, 2j]/8
+			res[i, j] += temp[2i + 1, 2j]/8
+			res[i, j] += temp[2i - 1, 2j - 1]/16
+			res[i, j] += temp[2i - 1, 2j + 1]/16
+			res[i, j] += temp[2i + 1, 2j - 1]/16
+			res[i, j] += temp[2i + 1, 2j + 1]/16
 		end
-
-		newN = floor(Int64, N/2)
-		newA = Creer_A(newN)
-		newF = zeros(newN*newN)
-		newU = zeros(newN*newN)
-
-		# println("Fine to coarse")
-		for i = 1:newN
-			# @show i
-			for j = 1:newN
-				# @show j
-				newF[j + newN*(i - 1)] = F[2j + N*(2i - 1)]
-				newU[j + newN*(i - 1)] = U[2j + N*(2i - 1)]
-			end
-		end
-		
-		newU = MultigridGS(newA, newF, newN, newU, pre, post)
-
-		# println("Coarse to fine")
-		for i = 1:newN
-			# @show i
-			for j = 1:newN
-				# @show j
-				U[2j + N*(2i - 1)] = newU[j + newN*(i - 1)]
-			end
-		end
-
-		# println("Post smoothing")
-		for i = 1:post
-			# @show i
-			U = GaussSeidel(A, F, U)
-		end
-
-		# println("fin multigrid, N = ", N, "\n")
-		return U
 	end
+	return res[:], newN
+end
+
+function CycleJ(A, F, x0, N::Int64, pre, post, nb = 1)
+	U = Jacobi(A, F, x0, pre)
+	r, newN = Restriction(F - A*U, N)
+	if newN == 1
+		d = (r[1]/A[1])*ones(1)
+	else
+		tempA = Creer_A(newN)
+		tempX = zeros(newN*newN)
+		for i = 1:nb
+			d = CycleJ(tempA, r, tempX, newN, pre, post, nb)
+		end
+	end
+	d, _ = Prolongation(d, newN)
+	U += d
+	U = Jacobi(A, F, U, post)
+	return U
+end
+
+function CycleGS(A, F, x0, N::Int64, pre, post, nb = 1)
+	U = GaussSeidel(A, F, x0, pre)
+	r, newN = Restriction(F - A*U, N)
+	if newN == 1
+		d = (r[1]/A[1])*ones(1)
+	else
+		tempA = Creer_A(newN)
+		tempX = zeros(newN*newN)
+		for i = 1:nb
+			d = CycleGS(tempA, r, tempX, newN, pre, post, nb)
+		end
+	end
+	d, _ = Prolongation(d, newN)
+	U += d
+	U = GaussSeidel(A, F, U, post)
+	return U
+end
+
+function MultigridJ(F, N::Int64, pre, post, nbc = 1, nbm = 2)
+	tempN = N + 1
+	k = -1
+	while tempN != 1
+		k += 1
+		tempN /= 2
+	end
+	tempN = floor(Int64, tempN)
+	tempF = F[N*(2^k - 1) + 2^k]*ones(tempN)
+	A = Creer_A(tempN)
+	U = (F[1]/A[1])*ones(tempN)
+	while tempN != N
+		U, tempN = Prolongation(U, tempN)
+		k -= 1
+		tempF = zeros(tempN*tempN)
+		for i = 1:tempN
+			for j = 1:tempN
+				tempF[j + (i - 1)tempN] = F[N*((2^k)*i - 1) + (2^k)*j]
+			end
+		end
+		A = Creer_A(tempN)
+		for i = 1:nbm
+			U = CycleJ(A, tempF, U,  tempN, pre, post, nbc)
+		end
+	end
+	return U
+end
+
+function MultigridGS(F, N::Int64, pre, post, nbc = 1, nbm = 2)
+	tempN = N + 1
+	k = -1
+	while tempN != 1
+		k += 1
+		tempN /= 2
+	end
+	tempN = floor(Int64, tempN)
+	tempF = F[N*(2^k - 1) + 2^k]*ones(tempN)
+	A = Creer_A(tempN)
+	U = (F[1]/A[1])*ones(tempN)
+	while tempN != N
+		U, tempN = Prolongation(U, tempN)
+		k -= 1
+		tempF = zeros(tempN*tempN)
+		for i = 1:tempN
+			for j = 1:tempN
+				tempF[j + (i - 1)tempN] = F[N*((2^k)*i - 1) + (2^k)*j]
+			end
+		end
+		A = Creer_A(tempN)
+		for i = 1:nbm
+			U = CycleGS(A, tempF, U, tempN, pre, post, nbc)
+		end
+	end
+	return U
 end

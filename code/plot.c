@@ -7,30 +7,30 @@
 int main(int argc, char **argv){
 	char fichier[1000000] = "../data/Version3/Comparaisons/", commande[1000000];
 	DIR* dossier = opendir(fichier);
-	if (dossier){
-		// struct dirent* dir;
-		// while((dir = readdir(dossier))){
-		// 	char* nom = dir->d_name;
-		// 	if((strcmp(".", nom)) && (strcmp("..", nom)) && (strcmp("Conclusions.txt", nom))){
-		// 		printf("%s\n", nom);
-		// 		// strcpy(fichier, "../data/Version3/Comparaisons/");
-		// 		// strcpy(commande, "python3 plot.py ");
-		// 		// strcat(fichier, nom);
-		// 		// strcat(commande, fichier);
-		// 		// system(commande);
-		// 	}
-		// }
-		closedir(dossier);
-	}
+	// if (dossier){
+	// 	struct dirent* dir;
+	// 	while((dir = readdir(dossier))){
+	// 		char* nom = dir->d_name;
+	// 		if((strcmp(".", nom)) && (strcmp("..", nom)) && (strcmp("Conclusions.txt", nom))){
+	// 			// printf("%s\n", nom);
+	// 			strcpy(fichier, "../data/Version3/Comparaisons/");
+	// 			strcpy(commande, "python plot.py ");
+	// 			strcat(fichier, nom);
+	// 			strcat(commande, fichier);
+	// 			system(commande);
+	// 		}
+	// 	}
+	// 	closedir(dossier);
+	// }
 	strcpy(fichier, "../data/Version3/Resultats/");
-	strcpy(commande, "python3 plot2.py ");
+	strcpy(commande, "python plot2.py ");
 	dossier = opendir(fichier);
 	if (dossier){
 		struct dirent* dir;
 		while((dir = readdir(dossier))){
 			char* nom = dir->d_name;
 			if((strcmp(".", nom)) && (strcmp("..", nom))){
-				// printf("%s\n", nom);
+				printf("%s\n", nom);
 				strcpy(fichier, "../data/Version3/Resultats/");
 				strcat(fichier, nom);
 				strcat(fichier, " ");
