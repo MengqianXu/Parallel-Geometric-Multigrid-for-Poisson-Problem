@@ -1,0 +1,64 @@
+using Pkg
+Pkg.add("MPI")
+using MPI
+
+MPI.Init()
+
+comm = MPI.COMM_WORLD
+rank = MPI.Comm_rank(comm)
+size = MPI.Comm_size(comm)
+
+# Function to distribute rows of the matrix among processes
+function distribute_rows(A, rank, size)
+    n = size(A, 1)
+    counts = fill(n ÷ size, size)
+    counts[1:(n % size)] .+= 1
+    displs = [sum(counts[1:i]) for i in 0:length(counts)-1]
+    local_rows = counts[rank+1]
+    local_A = A[displs[rank]+1:displs[rank]+local_rows, :]
+    return local_A
+end
+
+# Function to gather rows from all processes
+function gather_rows(local_X, rank, size)
+    n = length(local_X)
+    counts = MPI.Allgather([n], comm)
+    displs = [sum(counts[1:i]) for i in 0:length(counts)-1]
+    X = Vector{Float64}(undef, sum(counts))
+    MPI.Gatherv!(local_X, X, counts, displs, comm)
+    return X
+end
+function jacobi(A, b, tolerance, max_iterations)
+    n = size(A, 1)
+    x = zeros(n)
+    x_new = copy(x)
+    D_inv = 1.0 ./ diag(A)
+    local_A = distribute_rows(A, rank, size)
+    local_b = distribute_rows(b, rank, size)
+    
+    for iteration in 1:max_iterations
+        for i in 1:size(local_A, 1)
+            row_start = sum(size(local_A, 1) for r in 0:rank-1) + 1
+            sum_Ax = dot(local_A[i, :], x)
+            x_new[row_start+i-1] = D_inv[row_start+i-1] * (local_b[i] - (sum_Ax - local_A[i, row_start+i-1] * x[row_start+i-1]))
+        end
+        local_x_new = x_new[row_start:row_start+size(local_A,1)-1]
+        MPI.Allgather!(local_x_new, x, comm)
+        if norm(x - x_new, Inf) < tolerance
+            break
+        end
+        x .= x_new
+    end
+    
+    return x
+end
+A = rand(10, 10) + 10I # Making sure the matrix is diagonally dominant
+b = rand(10)
+tolerance = 1e-5
+max_iterations = 1000
+
+x_jacobi = jacobi(A, b, tolerance, max_iterations)
+
+println("Solution using Jacobi: ", x_jacobi)
+
+MPI.Finalize()
