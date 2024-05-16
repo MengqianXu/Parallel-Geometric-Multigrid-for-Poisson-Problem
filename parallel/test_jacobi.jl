@@ -38,7 +38,7 @@ function Creer_F(p, q, N)
     return ((1 / (N + 1))^2) * f
 end
 
-function Jacobi(A, b, x0, MaxIter, tol = 10^(-15))
+function Jacobi(A, b, x0, tol = 10^(-15), MaxIter = 10000)
 	ancien = copy(x0)
 	nouveau = copy(b)
 	C, L, V = findnz(A)
@@ -111,177 +111,255 @@ function decomposition(n)
 end
 
 
-function parallel_jacobi_solver(F,U0,N::Int64,MaxIter,tol=1e-15)
-    MPI.Init()
-    comm = MPI.COMM_WORLD
-    rank = MPI.Comm_rank(comm)
-    size = MPI.Comm_size(comm)
-    
-    a, b = decomposition(size)
-    x = ceil(Int64, N / a)
-    y = ceil(Int64, N / b)
-    c = rand() % a
-    d = floor(Int64, (rank - c) / a)
+function Jacobi_MPI(F, U0, N, tol = 10^(-15), MaxIter = 10000)
+	# Initialisation des paramètres
+	# MPI.Init()
+	comm = MPI.COMM_WORLD
+	rank = MPI.Comm_rank(comm)
+	size = MPI.Comm_size(comm)
+	a, b = decomposition(size)
+	x = ceil(Int64, N/a)
+	y = ceil(Int64, N/b)
+	d = rank%a
+	c = floor(Int64, (rank - d)/a)
+	h = 1/(N + 1)
 
-    U_local = zeros(x*y)
-    F_local = zeros(x*y)
-    if rank == 0
-        temp_U0 = reshape(U0,(N,N))
-        temp_F0 = reshape(F,(N,N))
-        temp_U = NaN64*ones(a*x, b*y)
-		temp_F = NaN64*ones(a*x, b*y)
-        pos = 1
-        for m = 0:(a - 1)
+
+	# Initialisation des variables utilisées
+	tempU = zeros(1)
+	Ulocal = zeros(x*y)
+	Flocal = zeros(x*y)
+
+	if rank == 0
+		tempU0 = reshape(U0, (N, N))
+		tempF0 = reshape(F, (N, N))
+		tempU = NaN64*ones(a*x, b*y)
+		tempF = NaN64*ones(a*x, b*y)
+		Ures = zeros(N, N)
+		pos = 1
+
+		for m = 0:(a - 1)
 			for n = 0:(b - 1)
 				for i = 1:x
 					colonne = m*x + i
 					for j = 1:y
 						ligne = n*y + j
 						if (ligne <= N) && (colonne <= N)
-							temp_U[pos] = temp_U0[ligne, colonne]
-							temp_F[pos] = temp_F0[ligne, colonne]
+							tempU[pos] = tempU0[ligne, colonne]
+							tempF[pos] = tempF0[ligne, colonne]
 						end
 						pos += 1
 					end
 				end
 			end
 		end
+		
+		tempU = tempU[:]
+		tempF = tempF[:]
+		MPI.Scatter!(tempU, Ulocal, 0, comm)
+		MPI.Scatter!(tempF, Flocal, 0, comm)
+	end
 
-        temp_U = temp_U[:]
-        temp_F = tempF[:]
-        Scatterv!(temp_U,U_local,comm)
-        Scatterv!(temp_F,F_local,comm)
-    end 
-    U_local = reshape(U_local, (y, x))
-	F_local = reshape(F_local, (y, x))
-    U_new = zeros(y, x)
-    iteration = 0
-
-    requeteS = MPI.MultiRequest(4)
+	Ulocal = reshape(Ulocal, (y, x))
+	Flocal = reshape(Flocal, (y, x))
+	@show Flocal, rank
+	Ulocal_new = zeros(y, x)
+	requeteS = MPI.MultiRequest(4)
 	requeteR = MPI.MultiRequest(4)
+	compteur = 1
+
+	if c > 0
+		tabgaucheS = Ulocal[:, 1]
+		tabgaucheR = zeros(y)
+		MPI.Isend(tabgaucheS, rank - a, 0, comm, requeteS[compteur])
+		MPI.Irecv!(tabgaucheR, rank - a, 0, comm, requeteR[compteur])
+		compteur += 1
+	end
+
+	if c < (a - 1)
+		tabdroiteS = Ulocal[:, x]
+		tabdroiteR = zeros(y)
+		MPI.Isend(tabdroiteS, rank + a, 0, comm, requeteS[compteur])
+		MPI.Irecv!(tabdroiteR, rank + a, 0, comm, requeteR[compteur])
+		compteur += 1
+	end
+
+	if d > 0
+		tabhautS = Ulocal[1, :]
+		tabhautR = zeros(x)
+		MPI.Isend(tabhautS, rank - 1, 0, comm, requeteS[compteur])
+		MPI.Irecv!(tabhautR, rank - 1, 0, comm, requeteR[compteur])
+		compteur += 1
+	end
+
+	if d < (b - 1)
+		tabbasS = Ulocal[y, :]
+		tabbasR = zeros(x)
+		MPI.Isend(tabbasS, rank + 1, 0, comm, requeteS[compteur])
+		MPI.Irecv!(tabbasR, rank + 1, 0, comm, requeteR[compteur])
+		compteur += 1
+	end
+
+	MPI.Waitall(requeteS)
+	MPI.Waitall(requeteR)	
 
 
-    nb = 1
-    while iteration < MaxIter
-        iteration += 1
-        if d < a - 1
-            rank_droit = rank + a
-            if rank_droit < size
-                TabDroit_R = zeros(y)
-                MPI.Isend(U_local[:, x] , comm, dest = rank_droit,requeteS[nb])
-                MPI.Irecv!(TabDroit_R, comm, source=rank_droit, requeteS[nb])
-                U_local[:,x]  = TabDroit_R 
-                nb +=1
-            end
-            
-        end
-        
-        if d > 0
-            rank_gauch = rank - a
-            if rank_gauch >= 0
-                TabGauch_R = zeros(y)
-                MPI.Isend(U_local[:,1] , comm, dest = rank_gauch,requeteS[nb])
-                MPI.Irecv!(TabGauch_R, comm, source=rank_gauch, requeteS[nb])
-                U_local[:,1]  = TabGauch_R 
-                nb +=1
-            end
-        end
-        
-        if c < b - 1
-            rank_bas = rank + 1
-            if rank_bas < size
-                TabBas_R = zeros(x)
-                MPI.Isend(U_local[y,:], comm, dest = rank_bas,requeteS[nb])
-                MPI.Irecv!(TabBas_R, comm, source=rank_bas, requeteS[nb])
-                U_local[y,:]  = TabBas_R 
-                nb +=1
-            end
-        end
-        
-        if c > 0
-            rank_haut = rank - 1
-            if rank_haut >= 0
-                TabHaut_R = zeros(x)
-                MPI.Isend(U_local[1,:], comm, dest = rank_haut,requeteS[nb])
-                MPI.Irecv!(TabHaut_R,comm, source = rank_haut, requeteS[nb])
-                U_local[1,:] = TabHaut_R
-                nb +=1
-            end
-        end
-    
-        #for i = 1:x
-            #for j = 1:y
-                #idx = (i - 1) * y + j
-                #U_new[idx] = (F_local[idx] - sum_neighbours(U_old, i, j, x, y)) * 1/4
-            #end
-        #end
+	# Première itération de Jacobi
+	norme_carre_local = 0
+	for i = 1:x
+		colonne = c*x + i 
+		for j = 1:y
+			ligne = d*y + j
+			if (ligne <= N) && (colonne <= N)
+				res = (h^2)Flocal[j, i]
+				if i > 1
+					res += Ulocal[j, i - 1]
+				else
+					if c > 0
+						res += tabgaucheR[j]
+					end
+				end
 
-        norme_local = 0.0
-        for i = 1:x
-            colonne = d*x + i 
-            for j = 1:y
-                ligne = c*y + j
-                if (ligne <= N) && (colonne <= N)
-                    sum = (1/(N + 1)^2) * F_local[j, i]
-                    if i > 1
-                        sum += U_local[j, i - 1]
-                    else
-                        if d > 0
-                            sum += TabGauch_R[j]
-                        end
-                    end
-    
-                    if (colonne + 1) <= N
-                        if i < x
-                            sum += U_local[j, i + 1]
-                        else
-                            if d < (a - 1)
-                                sum += TabDroit_R[j]
-                            end
-                        end
-                    end
-    
-                    if j > 1
-                        sum += U_local[j - 1, i]
-                    else
-                        if c > 0
-                            sum += TabHaut_R[i]
-                        end
-                    end
-    
-                    if (ligne + 1) <= N
-                        if j < y
-                            sum += U_local[j + 1, i]
-                        else
-                            if c < (b - 1)
-                                sum += TabBas_R[i]
-                            end
-                        end
-                    end
-                    U_new[j, i] = sum / 4
-                    norme_local += norm(U_new[j, i] - U_local[j, i])
-                end
-            end
-        end
-        norm = MPI.Reduce(norme_local, MPI.SUM, comm)
-        if norm < tol
-            break
-        end
-        
-	    MPI.Waitall(requeteS)
-	    MPI.Waitall(requeteR)
-        U_local .= U_new
-    end
-    
-    # Gather U_local from all processes to U
-    U_local = U_local[:]
-    temp_U = zeros(a*x*b*y)
-    MPI.Gather!(U_local, temp_U, 0, comm)
-    
-    U = zeros(N, N)
-    if rank == 0
+				if (colonne + 1) <= N
+					if i < x
+						res += Ulocal[j, i + 1]
+					else
+						if c < (a - 1)
+							res += tabdroiteR[j]
+						end
+					end
+				end
+
+				if j > 1
+					res += Ulocal[j - 1, i]
+				else
+					if d > 0
+						res += tabhautR[i]
+					end
+				end
+
+				if (ligne + 1) <= N
+					if j < y
+						res += Ulocal[j + 1, i]
+					else
+						if d < (b - 1)
+							res += tabbasR[i]
+						end
+					end
+				end
+				Ulocal_new[j, i] = res/4
+				norme_carre_local += (Ulocal_new[j, i] - Ulocal[j, i])^2
+			end
+		end
+	end
+	
+	Ulocal = Ulocal[:]
+	Ulocal_new = Ulocal_new[:]
+	norme_carre = MPI.Allreduce(norme_carre_local, +, comm)
+	norme = sqrt(norme_carre)
+	iteration = 1
+	@show norme
+
+	# Iterations de Jacobi
+	while (norme >= tol) && (iteration <= MaxIter)
+		@show rank, iteration
+		Ulocal = copy(reshape(Ulocal_new, (y, x)))
+		Ulocal_new = reshape(Ulocal_new, (y, x))
+		compteur = 1
+		
+		if c > 0
+			tabgaucheS = Ulocal[:, 1]
+			MPI.Isend(tabgaucheS, rank - a, 0, comm, requeteS[compteur])
+			MPI.Irecv!(tabgaucheR, rank - a, 0, comm, requeteR[compteur])
+			compteur += 1
+		end
+	
+		if c < (a - 1)
+			tabdroiteS = Ulocal[:, x]
+			MPI.Isend(tabdroiteS, rank + a, 0, comm, requeteS[compteur])
+			MPI.Irecv!(tabdroiteR, rank + a, 0, comm, requeteR[compteur])
+			compteur += 1
+		end
+	
+		if d > 0
+			tabhautS = Ulocal[1, :]
+			MPI.Isend(tabhautS, rank - 1, 0, comm, requeteS[compteur])
+			MPI.Irecv!(tabhautR, rank - 1, 0, comm, requeteR[compteur])
+			compteur += 1
+		end
+	
+		if d < (b - 1)
+			tabbasS = Ulocal[y, :]
+			MPI.Isend(tabbasS, rank + 1, 0, comm, requeteS[compteur])
+			MPI.Irecv!(tabbasR, rank + 1, 0, comm, requeteR[compteur])
+			compteur += 1
+		end
+	
+		MPI.Waitall(requeteS)
+		MPI.Waitall(requeteR)
+
+		norme_carre_local = 0
+		for i = 1:x
+			colonne = c*x + i 
+			for j = 1:y
+				ligne = d*y + j
+				if (ligne <= N) && (colonne <= N)
+					res = (h^2)Flocal[j, i]
+					if i > 1
+						res += Ulocal[j, i - 1]
+					else
+						if c > 0
+							res += tabgaucheR[j]
+						end
+					end
+	
+					if (colonne + 1) <= N
+						if i < x
+							res += Ulocal[j, i + 1]
+						else
+							if c < (a - 1)
+								res += tabdroiteR[j]
+							end
+						end
+					end
+	
+					if j > 1
+						res += Ulocal[j - 1, i]
+					else
+						if d > 0
+							res += tabhautR[i]
+						end
+					end
+	
+					if (ligne + 1) <= N
+						if j < y
+							res += Ulocal[j + 1, i]
+						else
+							if d < (b - 1)
+								res += tabbasR[i]
+							end
+						end
+					end
+					Ulocal_new[j, i] = res/4
+					norme_carre_local += (Ulocal_new[j, i] - Ulocal[j, i])^2
+				end
+			end
+		end
+		
+		Ulocal = Ulocal[:]
+		Ulocal_new = Ulocal_new[:]
+		norme_carre = MPI.Allreduce(norme_carre_local, +, comm)
+		norme = sqrt(norme_carre)
+		iteration += 1
+	end
+	@show norme
+
+	MPI.Gather!(Ulocal_new, tempU, comm)
+	# MPI.Finalize()
+
+	if rank == 0
 		pos = 1
-		temp_U = reshape(temp_U, (a*x, b*y))
+		tempU = reshape(tempU, (a*x, b*y))
 		for m = 0:(a - 1)
 			for n = 0:(b - 1)
 				for i = 1:x
@@ -289,18 +367,15 @@ function parallel_jacobi_solver(F,U0,N::Int64,MaxIter,tol=1e-15)
 					for j = 1:y
 						ligne = n*y + j
 						if (ligne <= N) && (colonne <= N)
-							U[ligne, colonne] = temp_U[pos]
+							Ures[ligne, colonne] = tempU[pos]
 						end
 						pos += 1
 					end
 				end
 			end
 		end
-		return U[:]
+		return Ures[:]
 	end
-    
-    MPI.Finalize()
-    return U
 end
 
 # Calculate the sum of neighbours of U(i, j)
@@ -326,29 +401,35 @@ end
 
 
 
-function main(N)
-    p = 1
-    q = 1
-    A = Creer_A(N)
-    F = Creer_F(p, q, N)
-    x0 = rand(1:9, (N*N, 1))
-    x0 = ones(N * N)
-    MaxIter = 1
-    # Solve with parallel Jacobi method
-    println("Solving with parallel Jacobi...")
-    @time x_parallel_jacobi = parallel_jacobi_solver(F, x0, N, MaxIter)
-    x_parallel = reshape(x_parallel_jacobi, (N*N, 1))
 
-    println("Solving with non-parallel Jacobi...")
-    @time x_jacobi = Jacobi(A, F, x0,MaxIter)
-    #println("Final result vector size: $(length(x_jacobi))")
 
-    println("non-parallel Jacobi",x_jacobi)
-    println("parallel Jacobi",x_parallel)
-    
-    # Compare solutions
-    println("difference between solutions:", maximum(abs.(x_jacobi - x_parallel)))
-end
+MPI.Init()
+comm = MPI.COMM_WORLD
+size = MPI.Comm_size(comm)
+N = 3
+p = rand(-5:5) 
+q = rand(-5:5)
+@show p, q
 
-N = 7
-main(N)
+A = Creer_A(N)
+F = Creer_F(p, q, N)
+x0 = ones(N*N)
+
+resD = A\F
+
+
+# Solve with parallel Jacobi method
+println("\nSolving with parallel Jacobi...")
+@time resJMPI = Jacobi_MPI(F, x0, N)
+
+
+println("\nSolving with non-parallel Jacobi...")
+@time  resJ = Jacobi(A, F, x0)
+#println("Final result vector size: $(length(x_jacobi))")
+
+println("\nnon-parallel Jacobi",resJ)
+println("\nparallel Jacobi",resJMPI)
+
+# Compare solutions
+println("\nnorm between solutions:", norm(resJ - resJMPI))
+println("\ndifference between solutions:", abs.(maximum(resJ - resJMPI)))
