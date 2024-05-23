@@ -38,7 +38,7 @@ function Creer_F(p, q, N)
     return ((1 / (N + 1))^2) * f
 end
 
-function Jacobi(A, b, x0, tol = 10^(-15), MaxIter = 10000)
+function Jacobi(A, b, x0, tol = 10^(-15), MaxIter = 1)
 	ancien = copy(x0)
 	nouveau = copy(b)
 	C, L, V = findnz(A)
@@ -111,7 +111,7 @@ function decomposition(n)
 end
 
 
-function Jacobi_MPI(F, U0, N, tol = 10^(-15), MaxIter = 10000)
+function Jacobi_MPI(F, U0, N, tol = 10^(-15), MaxIter = 1)
 	# Initialisation des paramètres
 	# MPI.Init()
 	comm = MPI.COMM_WORLD
@@ -162,7 +162,7 @@ function Jacobi_MPI(F, U0, N, tol = 10^(-15), MaxIter = 10000)
 
 	Ulocal = reshape(Ulocal, (y, x))
 	Flocal = reshape(Flocal, (y, x))
-	@show Flocal, rank
+	#@show Flocal, rank
 	Ulocal_new = zeros(y, x)
 	requeteS = MPI.MultiRequest(4)
 	requeteR = MPI.MultiRequest(4)
@@ -258,11 +258,11 @@ function Jacobi_MPI(F, U0, N, tol = 10^(-15), MaxIter = 10000)
 	norme_carre = MPI.Allreduce(norme_carre_local, +, comm)
 	norme = sqrt(norme_carre)
 	iteration = 1
-	@show norme
+	#@show norme
 
 	# Iterations de Jacobi
 	while (norme >= tol) && (iteration <= MaxIter)
-		@show rank, iteration
+		#@show rank, iteration
 		Ulocal = copy(reshape(Ulocal_new, (y, x)))
 		Ulocal_new = reshape(Ulocal_new, (y, x))
 		compteur = 1
@@ -352,7 +352,7 @@ function Jacobi_MPI(F, U0, N, tol = 10^(-15), MaxIter = 10000)
 		norme = sqrt(norme_carre)
 		iteration += 1
 	end
-	@show norme
+	#@show norme
 
 	MPI.Gather!(Ulocal_new, tempU, comm)
 	# MPI.Finalize()
@@ -378,23 +378,6 @@ function Jacobi_MPI(F, U0, N, tol = 10^(-15), MaxIter = 10000)
 	end
 end
 
-# Calculate the sum of neighbours of U(i, j)
-function sum_neighbours(U, i, j, x, y)
-    sum = 0.0
-    if i > 1
-        sum += U[(i - 2) * y + j]
-    end
-    if i < x
-        sum += U[i * y + j]
-    end
-    if j > 1
-        sum += U[(i - 1) * y + j - 1]
-    end
-    if j < y
-        sum += U[(i - 1) * y + j + 1]
-    end
-    return sum
-end
     
 
 
@@ -406,10 +389,10 @@ end
 MPI.Init()
 comm = MPI.COMM_WORLD
 size = MPI.Comm_size(comm)
-N = 3
-p = rand(-5:5) 
-q = rand(-5:5)
-@show p, q
+N = 63
+p = 2
+q = 2
+#@show p, q
 
 A = Creer_A(N)
 F = Creer_F(p, q, N)
@@ -421,15 +404,47 @@ resD = A\F
 # Solve with parallel Jacobi method
 println("\nSolving with parallel Jacobi...")
 @time resJMPI = Jacobi_MPI(F, x0, N)
+@time resJMPI = Jacobi_MPI(F, x0, N)
 
 
 println("\nSolving with non-parallel Jacobi...")
 @time  resJ = Jacobi(A, F, x0)
+@time  resJ = Jacobi(A, F, x0)
 #println("Final result vector size: $(length(x_jacobi))")
 
-println("\nnon-parallel Jacobi",resJ)
-println("\nparallel Jacobi",resJMPI)
+#println("\nnon-parallel Jacobi",resJ)
+#println("\nparallel Jacobi",resJMPI)
 
 # Compare solutions
-println("\nnorm between solutions:", norm(resJ - resJMPI))
-println("\ndifference between solutions:", abs.(maximum(resJ - resJMPI)))
+#println("\nnorm between solutions:", norm(resJ - resJMPI))
+#println("\ndifference between solutions:", abs.(maximum(resJ - resJMPI)))
+# Compare solutions
+function subtract_vectors(vector1, vector2)
+    if isempty(vector1) || isempty(vector2)
+        println("One or both vectors are empty.")
+        return nothing
+    end
+    
+    if length(vector1) != length(vector2)
+        println("Vectors have different lengths.")
+        return nothing
+    end
+    
+    result = spzeros(length(vector1))
+    for i in 1:length(vector1)
+        result[i] = get(vector1, i, 0.0) - get(vector2, i, 0.0)
+    end
+    
+    return result
+end
+
+
+
+# 执行减法
+result = subtract_vectors(resJ, resJMPI)
+if result !== nothing
+    #println("Result of subtraction:", result)
+end
+
+println("\nnorm between solutions:", norm(result))
+#println("\ndifference between solutions:", abs.(maximum(resJ - resJMPI)))
