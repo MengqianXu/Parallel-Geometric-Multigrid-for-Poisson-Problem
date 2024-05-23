@@ -3,7 +3,7 @@ using Random
 using SparseArrays
 
 include("Problem.jl")
-
+include("finalMPI.jl")
 # function Jacobi(A, b, x0, tol = 10^(-15), MaxIter = 10000)
 # 	D = Diagonal(A)
 # 	E = -(LowerTriangular(A) - D)
@@ -201,7 +201,7 @@ include("Problem.jl")
 # 	return nouveau
 # end
 
-function Jacobi(A, b, x0, MaxIter = 10000, tol = 10^(-15))
+function Jacobi(A, b, x0, MaxIter = 1, tol = 10^(-15))
 	ancien = copy(x0)
 	nouveau = copy(b)
 	C, L, V = findnz(A)
@@ -437,6 +437,24 @@ function CycleJ(A, F, x0, N::Int64, pre, post, nb = 1)
 	return U
 end
 
+function CycleJ_MPI(A, F, x0, N::Int64, pre, post, nb = 1)
+	U = Jacobi_MPI(A, F, x0, pre)
+	r, newN = Restriction(F - A*U, N)
+	if newN == 1
+		d = (r[1]/A[1])*ones(1)
+	else
+		tempA = Creer_A(newN)
+		tempX = zeros(newN*newN)
+		for i = 1:nb
+			d = CycleJ(tempA, r, tempX, newN, pre, post, nb)
+		end
+	end
+	d, _ = Prolongation(d, newN)
+	U += d
+	U = Jacobi_MPI(A, F, U, post)
+	return U
+end
+
 function CycleGS(A, F, x0, N::Int64, pre, post, nb = 1)
 	U = GaussSeidel(A, F, x0, pre)
 	r, newN = Restriction(F - A*U, N)
@@ -506,6 +524,34 @@ function MultigridGS(F, N::Int64, pre, post, nbc = 1, nbm = 2)
 		A = Creer_A(tempN)
 		for i = 1:nbm
 			U = CycleGS(A, tempF, U, tempN, pre, post, nbc)
+		end
+	end
+	return U
+end
+
+function MultigridJ_MPI(F, N::Int64, pre, post, nbc = 1, nbm = 2)
+	tempN = N + 1
+	k = -1
+	while tempN != 1
+		k += 1
+		tempN /= 2
+	end
+	tempN = floor(Int64, tempN)
+	tempF = F[N*(2^k - 1) + 2^k]*ones(tempN)
+	A = Creer_A(tempN)
+	U = (F[1]/A[1])*ones(tempN)
+	while tempN != N
+		U, tempN = Prolongation(U, tempN)
+		k -= 1
+		tempF = zeros(tempN*tempN)
+		for i = 1:tempN
+			for j = 1:tempN
+				tempF[j + (i - 1)tempN] = F[N*((2^k)*i - 1) + (2^k)*j]
+			end
+		end
+		A = Creer_A(tempN)
+		for i = 1:nbm
+			U = CycleJ_MPI(A, tempF, U,  tempN, pre, post, nbc)
 		end
 	end
 	return U
