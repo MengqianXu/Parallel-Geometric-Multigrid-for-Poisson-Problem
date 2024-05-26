@@ -38,7 +38,7 @@ function Creer_F(p, q, N)
     return ((1 / (N + 1))^2) * f
 end
 
-function Jacobi(A, b, x0, tol = 10^(-15), MaxIter = 1)
+function Jacobi(A, b, x0, tol = 10^(-15), MaxIter=10000 )
 	ancien = copy(x0)
 	nouveau = copy(b)
 	C, L, V = findnz(A)
@@ -110,8 +110,7 @@ function decomposition(n)
     return a,b
 end
 
-
-function Jacobi_MPI(F, U0, N, tol = 10^(-15), MaxIter = 1)
+function Jacobi_MPI(F, U0, N, tol = 10^(-15), MaxIter = 10000)
 	# Initialisation des paramètres
 	# MPI.Init()
 	comm = MPI.COMM_WORLD
@@ -162,7 +161,7 @@ function Jacobi_MPI(F, U0, N, tol = 10^(-15), MaxIter = 1)
 
 	Ulocal = reshape(Ulocal, (y, x))
 	Flocal = reshape(Flocal, (y, x))
-	#@show Flocal, rank
+	@show Flocal, rank
 	Ulocal_new = zeros(y, x)
 	requeteS = MPI.MultiRequest(4)
 	requeteR = MPI.MultiRequest(4)
@@ -258,11 +257,11 @@ function Jacobi_MPI(F, U0, N, tol = 10^(-15), MaxIter = 1)
 	norme_carre = MPI.Allreduce(norme_carre_local, +, comm)
 	norme = sqrt(norme_carre)
 	iteration = 1
-	#@show norme
+	@show norme
 
 	# Iterations de Jacobi
 	while (norme >= tol) && (iteration <= MaxIter)
-		#@show rank, iteration
+		@show rank, iteration
 		Ulocal = copy(reshape(Ulocal_new, (y, x)))
 		Ulocal_new = reshape(Ulocal_new, (y, x))
 		compteur = 1
@@ -352,7 +351,7 @@ function Jacobi_MPI(F, U0, N, tol = 10^(-15), MaxIter = 1)
 		norme = sqrt(norme_carre)
 		iteration += 1
 	end
-	#@show norme
+	@show norme
 
 	MPI.Gather!(Ulocal_new, tempU, comm)
 	# MPI.Finalize()
@@ -377,47 +376,143 @@ function Jacobi_MPI(F, U0, N, tol = 10^(-15), MaxIter = 1)
 		return Ures[:]
 	end
 end
-
     
+function Prolongation(U, N)
+	newN = 2N + 1
+	temp = reshape(U, (N, N))
+	res = zeros(newN, newN)
+	for i = 1:N
+		for j = 1:N
+			res[2i, 2j] += temp[i, j]
+			res[2i - 1, 2j - 1] += temp[i, j]/4
+			res[2i - 1, 2j + 1] += temp[i, j]/4
+			res[2i + 1, 2j - 1] += temp[i, j]/4
+			res[2i + 1, 2j + 1] += temp[i, j]/4
+			res[2i, 2j - 1] += temp[i, j]/2
+			res[2i, 2j + 1] += temp[i, j]/2
+			res[2i - 1, 2j] += temp[i, j]/2
+			res[2i + 1, 2j] += temp[i, j]/2
+		end
+	end
+	return res[:], newN
+end
+
+function Restriction(U, N)
+	newN = floor(Int64, N/2)
+	temp = reshape(U, (N, N))
+	res = zeros(newN, newN)
+	for i = 1:newN
+		for j = 1:newN
+			res[i, j] += temp[2i, 2j]/4
+			res[i, j] += temp[2i, 2j - 1]/8
+			res[i, j] += temp[2i, 2j + 1]/8
+			res[i, j] += temp[2i - 1, 2j]/8
+			res[i, j] += temp[2i + 1, 2j]/8
+			res[i, j] += temp[2i - 1, 2j - 1]/16
+			res[i, j] += temp[2i - 1, 2j + 1]/16
+			res[i, j] += temp[2i + 1, 2j - 1]/16
+			res[i, j] += temp[2i + 1, 2j + 1]/16
+		end
+	end
+	return res[:], newN
+end
+
+function CycleJ(A, F, x0, N::Int64, pre, post, nb = 1)
+	U = Jacobi(A, F, x0, pre)
+	r, newN = Restriction(F - A*U, N)
+	if newN == 1
+		d = (r[1]/A[1])*ones(1)
+	else
+		tempA = Creer_A(newN)
+		tempX = zeros(newN*newN)
+		for i = 1:nb
+			d = CycleJ(tempA, r, tempX, newN, pre, post, nb)
+		end
+	end
+	d, _ = Prolongation(d, newN)
+	U += d
+	U = Jacobi(A, F, U, post)
+	return U
+end
+
+function CycleJ_MPI(A, F, x0, N::Int64, pre, post, nb = 1)
+	U = Jacobi_MPI(A, F, x0, pre)
+	r, newN = Restriction(F - A*U, N)
+	if newN == 1
+		d = (r[1]/A[1])*ones(1)
+	else
+		tempA = Creer_A(newN)
+		tempX = zeros(newN*newN)
+		for i = 1:nb
+			d = CycleJ(tempA, r, tempX, newN, pre, post, nb)
+		end
+	end
+	d, _ = Prolongation(d, newN)
+	U += d
+	U = Jacobi_MPI(A, F, U, post)
+	return U
+end
+
+
+function MultigridJ(F, N::Int64, pre, post, nbc = 1, nbm = 2)
+	tempN = N + 1
+	k = -1
+	while tempN != 1
+		k += 1
+		tempN /= 2
+	end
+	tempN = floor(Int64, tempN)
+	tempF = F[N*(2^k - 1) + 2^k]*ones(tempN)
+	A = Creer_A(tempN)
+	U = (F[1]/A[1])*ones(tempN)
+	while tempN != N
+		U, tempN = Prolongation(U, tempN)
+		k -= 1
+		tempF = zeros(tempN*tempN)
+		for i = 1:tempN
+			for j = 1:tempN
+				tempF[j + (i - 1)tempN] = F[N*((2^k)*i - 1) + (2^k)*j]
+			end
+		end
+		A = Creer_A(tempN)
+		for i = 1:nbm
+			U = CycleJ(A, tempF, U,  tempN, pre, post, nbc)
+		end
+	end
+	return U
+end
 
 
 
+function MultigridJ_MPI(F, N::Int64, pre, post, nbc = 1, nbm = 2)
+	tempN = N + 1
+	k = -1
+	while tempN != 1
+		k += 1
+		tempN /= 2
+	end
+	tempN = floor(Int64, tempN)
+	tempF = F[N*(2^k - 1) + 2^k]*ones(tempN)
+	A = Creer_A(tempN)
+	U = (F[1]/A[1])*ones(tempN)
+	while tempN != N
+		U, tempN = Prolongation(U, tempN)
+		k -= 1
+		tempF = zeros(tempN*tempN)
+		for i = 1:tempN
+			for j = 1:tempN
+				tempF[j + (i - 1)tempN] = F[N*((2^k)*i - 1) + (2^k)*j]
+			end
+		end
+		A = Creer_A(tempN)
+		for i = 1:nbm
+			U = CycleJ_MPI(A, tempF, U,  tempN, pre, post, nbc)
+		end
+	end
+	return U
+end
 
 
-
-
-MPI.Init()
-comm = MPI.COMM_WORLD
-size = MPI.Comm_size(comm)
-N = 63
-p = 2
-q = 2
-#@show p, q
-
-A = Creer_A(N)
-F = Creer_F(p, q, N)
-x0 = ones(N*N)
-
-resD = A\F
-
-
-# Solve with parallel Jacobi method
-println("\nSolving with parallel Jacobi...")
-@time resJMPI = Jacobi_MPI(F, x0, N)
-@time resJMPI = Jacobi_MPI(F, x0, N)
-
-
-println("\nSolving with non-parallel Jacobi...")
-@time  resJ = Jacobi(A, F, x0)
-@time  resJ = Jacobi(A, F, x0)
-#println("Final result vector size: $(length(x_jacobi))")
-
-#println("\nnon-parallel Jacobi",resJ)
-#println("\nparallel Jacobi",resJMPI)
-
-# Compare solutions
-#println("\nnorm between solutions:", norm(resJ - resJMPI))
-#println("\ndifference between solutions:", abs.(maximum(resJ - resJMPI)))
 # Compare solutions
 function subtract_vectors(vector1, vector2)
     if isempty(vector1) || isempty(vector2)
@@ -440,11 +535,50 @@ end
 
 
 
-# 执行减法
-result = subtract_vectors(resJ, resJMPI)
-if result !== nothing
-    #println("Result of subtraction:", result)
-end
 
-println("\nnorm between solutions:", norm(result))
+MPI.Init()
+ comm = MPI.COMM_WORLD
+    rank = MPI.Comm_rank(comm)
+    size = MPI.Comm_size(comm)
+N = 3
+p = 2
+q = 2
+#@show p, q
+
+A = Creer_A(N)
+F = Creer_F(p, q, N)
+x0 = ones(N*N)
+
+resD = A\F
+
+
+# Solve with parallel Jacobi method
+println("\nSolving with parallel Jacobi...")
+@time resJMPI = Jacobi_MPI(F, x0, N,10000)
+@time resJMPI = Jacobi_MPI(F, x0, N,10000)
+#@time resMJ = MultigridJ_MPI(F, N, 1, 1)
+#@time resMJ = MultigridJ_MPI(F, N, 1, 1)
+
+println("\nSolving with non-parallel Jacobi...")
+@time  resJ = Jacobi(A, F, x0)
+@time  resJ = Jacobi(A, F, x0)
+#@time resMJ1 = MultigridJ(F, N, 1, 1)
+#@time resMJ1 = MultigridJ(F, N, 1, 1)
+#println("Final result vector size: $(length(x_jacobi))")
+
+#println("\nnon-parallel Jacobi",resJ)
+#println("\nparallel Jacobi",resJMPI)
+println("\nnorm between solutions jacobi et jacobi MPI:", norm(resJ-resJMPI))
+
+
+
+
+#result = subtract_vectors(resJ, resJMPI)
+#result2 = subtract_vectors(resMJ1, resMJ)
+#if result !== nothing
+    #println("Result of subtraction:", result)
+#end
+
+
+#println("\nnorm between solutions multigrid et multigrid MPI:", norm(result))
 #println("\ndifference between solutions:", abs.(maximum(resJ - resJMPI)))
