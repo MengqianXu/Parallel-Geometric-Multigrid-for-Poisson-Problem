@@ -13,7 +13,7 @@ comm = MPI.COMM_WORLD
 size = MPI.Comm_size(comm)
 rank = MPI.Comm_rank(comm)
 
-N = 7
+N = 3
 p = 2 
 q = 2
 #@show p, q
