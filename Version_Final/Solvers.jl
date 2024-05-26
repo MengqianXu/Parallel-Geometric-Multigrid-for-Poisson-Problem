@@ -3,7 +3,6 @@ using Random
 using SparseArrays
 
 include("Problem.jl")
-include("finalMPI.jl")
 # function Jacobi(A, b, x0, tol = 10^(-15), MaxIter = 10000)
 # 	D = Diagonal(A)
 # 	E = -(LowerTriangular(A) - D)
@@ -201,7 +200,7 @@ include("finalMPI.jl")
 # 	return nouveau
 # end
 
-function Jacobi(A, b, x0, MaxIter = 1, tol = 10^(-15))
+function Jacobi(A, b, x0, MaxIter = 10000, tol = 10^(-15))
 	ancien = copy(x0)
 	nouveau = copy(b)
 	C, L, V = findnz(A)
