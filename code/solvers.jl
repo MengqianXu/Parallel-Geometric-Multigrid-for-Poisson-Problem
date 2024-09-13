@@ -201,7 +201,7 @@ include("problem.jl")
 # 	return nouveau
 # end
 
-function Jacobi(A, b, x0, MaxIter = 10000, tol = 10^(-15))
+function Jacobi(A, b, x0, MaxIter = 1000000, tol = 10^(-15))
 	ancien = copy(x0)
 	nouveau = copy(b)
 	C, L, V = findnz(A)
@@ -253,10 +253,10 @@ function Jacobi(A, b, x0, MaxIter = 10000, tol = 10^(-15))
 		iteration += 1
 	end
 
-	return nouveau
+	return nouveau, iteration
 end
 
-function GaussSeidel(A, b, x0, MaxIter = 10000, tol = 10^(-15))
+function GaussSeidel(A, b, x0, MaxIter = 1000000, tol = 10^(-15))
 	ancien = copy(x0)
 	nouveau = copy(b)
 	C, L, V = findnz(A)
@@ -312,10 +312,10 @@ function GaussSeidel(A, b, x0, MaxIter = 10000, tol = 10^(-15))
 		iteration += 1
 	end
 
-	return nouveau
+	return nouveau, iteration
 end
 
-function SOR(A, b, w, x0, MaxIter = 10000, tol = 10^(-15))
+function SOR(A, b, w, x0, MaxIter = 1000000, tol = 10^(-15))
 	ancien = x0
 	nouveau = w*b
 	C, L, V = findnz(A)
@@ -376,7 +376,7 @@ function SOR(A, b, w, x0, MaxIter = 10000, tol = 10^(-15))
 		iteration += 1
 	end
 
-	return nouveau
+	return nouveau, iteration
 end
 
 function Prolongation(U, N)
@@ -420,7 +420,7 @@ function Restriction(U, N)
 end
 
 function CycleJ(A, F, x0, N::Int64, pre, post, nb = 1)
-	U = Jacobi(A, F, x0, pre)
+	U, _ = Jacobi(A, F, x0, pre)
 	r, newN = Restriction(F - A*U, N)
 	if newN == 1
 		d = (r[1]/A[1])*ones(1)
@@ -433,12 +433,12 @@ function CycleJ(A, F, x0, N::Int64, pre, post, nb = 1)
 	end
 	d, _ = Prolongation(d, newN)
 	U += d
-	U = Jacobi(A, F, U, post)
+	U, _ = Jacobi(A, F, U, post)
 	return U
 end
 
 function CycleGS(A, F, x0, N::Int64, pre, post, nb = 1)
-	U = GaussSeidel(A, F, x0, pre)
+	U, _ = GaussSeidel(A, F, x0, pre)
 	r, newN = Restriction(F - A*U, N)
 	if newN == 1
 		d = (r[1]/A[1])*ones(1)
@@ -451,7 +451,7 @@ function CycleGS(A, F, x0, N::Int64, pre, post, nb = 1)
 	end
 	d, _ = Prolongation(d, newN)
 	U += d
-	U = GaussSeidel(A, F, U, post)
+	U, _ = GaussSeidel(A, F, U, post)
 	return U
 end
 

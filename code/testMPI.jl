@@ -11,23 +11,24 @@ include("solversMPI.jl")
 MPI.Init()
 comm = MPI.COMM_WORLD
 size = MPI.Comm_size(comm)
-
-N = 3
-p = rand(-5:5) 
-q = rand(-5:5)
+rank = MPI.Comm_rank(comm)
+@show N = 63
+p = 2 
+q = 2
 @show p, q
 
 A = Creer_A(N)
 F = Creer_F(p, q, N)
 U = Creer_U(p, q, N)
-x0 = ones(N*N)
+x0 = [j + N*(i - 1) for j = 1:N, i = 1:N][:]
 
 resD = A\F
 resJ = Jacobi(A, F, x0)
 resGS = GaussSeidel(A, F, x0)
 resJMPI = Jacobi_MPI(F, x0, N)
 
-normeD = norm(U - resD)
-normeJ = norm(U - resJ)
-normeGS = norm(U - resGS)
-normeJMPI = norm(U - resJMPI)
+@show normeD = norm(U - resD)
+@show normeJ = norm(U - resJ)
+@show normeGS = norm(U - resGS)
+@show normeJMPI = norm(U - resJMPI)
+# MPI.Finalize()

@@ -20,7 +20,7 @@ end
 
 function Jacobi_MPI(F, U0, N, tol = 10^(-15), MaxIter = 10000)
 	# Initialisation des paramètres
-	# MPI.Init()
+	MPI.Init()
 	comm = MPI.COMM_WORLD
 	rank = MPI.Comm_rank(comm)
 	size = MPI.Comm_size(comm)
@@ -69,7 +69,9 @@ function Jacobi_MPI(F, U0, N, tol = 10^(-15), MaxIter = 10000)
 
 	Ulocal = reshape(Ulocal, (y, x))
 	Flocal = reshape(Flocal, (y, x))
-	@show Flocal, rank
+	@show Ulocal, rank
+	
+	# @show Flocal, rank
 	Ulocal_new = zeros(y, x)
 	requeteS = MPI.MultiRequest(4)
 	requeteR = MPI.MultiRequest(4)
@@ -169,7 +171,7 @@ function Jacobi_MPI(F, U0, N, tol = 10^(-15), MaxIter = 10000)
 
 	# Iterations de Jacobi
 	while (norme >= tol) && (iteration <= MaxIter)
-		@show rank, iteration
+		# @show rank, iteration
 		Ulocal = copy(reshape(Ulocal_new, (y, x)))
 		Ulocal_new = reshape(Ulocal_new, (y, x))
 		compteur = 1
@@ -262,7 +264,7 @@ function Jacobi_MPI(F, U0, N, tol = 10^(-15), MaxIter = 10000)
 	@show norme
 
 	MPI.Gather!(Ulocal_new, tempU, comm)
-	# MPI.Finalize()
+	MPI.Finalize()
 
 	if rank == 0
 		pos = 1

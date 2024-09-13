@@ -1,6 +1,5 @@
-syms x y a b c d;
+syms x y X Y;
 
-u = (x^a)*((1 - x)^b)*(y^c)*((1 - y)^d);
-h1 = diff(u, x, 2);
-h2 = diff(u, y, 2);
-f = -(h1 + h2);
+u = 2 + sin((2*pi*x)/X)*sin((4*pi*y)/Y);
+h1 = diff(u, x);
+h2 = diff(u, y);
